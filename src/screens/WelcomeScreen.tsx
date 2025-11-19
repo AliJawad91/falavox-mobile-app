@@ -1,6 +1,6 @@
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { background, buttonBorderColor, pressedLogInButtonBackground, pressedSignUpButtonBackground, signUpButtonBackground, text } from "../utils/colors";
+import { background, buttonBorderColor, pressedLogInButtonBackground, pressedPrimaryButtonBackground, primaryButtonBackground, text } from "../utils/colors";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { moderateScale, moderateVerticalScale } from "react-native-size-matters";
 import { RootStackParamList } from "../../App";
@@ -43,7 +43,7 @@ function WelcomeScreen({ navigation }: Props) {
                     <Text style={style.brandMessageStyle}>Millions of Hastags. {"\n"}Free on Convey.</Text>
 
                     <Pressable
-                        style={({ pressed }) => [style.signUpButtonStyle, { backgroundColor: pressed ? pressedSignUpButtonBackground : signUpButtonBackground }]}
+                        style={({ pressed }) => [style.signUpButtonStyle, { backgroundColor: pressed ? pressedPrimaryButtonBackground : primaryButtonBackground }]}
                         onPress={handleSignUpPress}>
 
                         <Text style={style.buttonTextStyle}>Sign up for free</Text>
@@ -108,7 +108,7 @@ const style = StyleSheet.create({
         width: moderateScale(332),
         height: moderateVerticalScale(44),
         borderRadius: moderateScale(40),
-        backgroundColor: signUpButtonBackground,
+        backgroundColor: primaryButtonBackground,
         marginTop: moderateVerticalScale(30),
         marginHorizontal: moderateScale(40),
         alignItems: 'center',

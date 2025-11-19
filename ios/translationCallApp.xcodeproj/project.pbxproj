@@ -11,13 +11,13 @@
 		1B08881510EF43D5A3B4FEB1 /* Inter_ExtraLightItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8CF17CB9B69F44C089DD0A44 /* Inter_ExtraLightItalic.ttf */; };
 		2FA484610D3E423BB57FC1AE /* Inter_BlackItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 69EDE66EDFC24697B9E7ED93 /* Inter_BlackItalic.ttf */; };
 		348B99D1C17D4C0882415C2F /* Inter_Thin.ttf in Resources */ = {isa = PBXBuildFile; fileRef = EA8F88B2BDFD4373BAC7E273 /* Inter_Thin.ttf */; };
-		3B440E164474EEF8D273D342 /* libPods-translationCallApp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4757E28F8C5D8A7E28D16C06 /* libPods-translationCallApp.a */; };
 		3D8FDAF7BCECF05057145D11 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
 		5057F762A321487AAEF22266 /* Inter_Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = E92F9E42A23C4340AF7F933C /* Inter_Light.ttf */; };
 		50E42102C34840F78F9C03C4 /* Inter_SemiBoldItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 52549CE5750348E0A0181946 /* Inter_SemiBoldItalic.ttf */; };
 		53138FFA57E5474F9409F387 /* Inter_LightItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F9D18DE2B6DC4519908F573B /* Inter_LightItalic.ttf */; };
 		57512EEFE01C4E1C8DE92DCA /* Inter_ExtraLight.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 91F1F6D71FA54342A1A279DE /* Inter_ExtraLight.ttf */; };
 		656A65FB47DF47FC90ECBC72 /* Inter_ThinItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6E987042A75448CE888F36A5 /* Inter_ThinItalic.ttf */; };
+		688927C34C2CA291D63DC746 /* libPods-translationCallApp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D41D788F8A650BFFAA002DD2 /* libPods-translationCallApp.a */; };
 		6D042F2BCAEA4ADB99E75CEB /* Inter_Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 058E6825601D49AAACB6E2F6 /* Inter_Bold.ttf */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
@@ -33,34 +33,34 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		058E6825601D49AAACB6E2F6 /* Inter_Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = Inter_Bold.ttf; path = ../assets/fonts/Inter_Bold.ttf; sourceTree = "<group>"; };
+		058E6825601D49AAACB6E2F6 /* Inter_Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = Inter_Bold.ttf; path = ../assets/fonts/Inter_Bold.ttf; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* translationCallApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = translationCallApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = translationCallApp/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = translationCallApp/Info.plist; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = translationCallApp/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		29A4FAE59C0949549FEF1A04 /* Inter_Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = Inter_Regular.ttf; path = ../assets/fonts/Inter_Regular.ttf; sourceTree = "<group>"; };
-		4757E28F8C5D8A7E28D16C06 /* libPods-translationCallApp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-translationCallApp.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		4811E091FA9F483299C06306 /* Inter_SemiBold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = Inter_SemiBold.ttf; path = ../assets/fonts/Inter_SemiBold.ttf; sourceTree = "<group>"; };
-		4E24B2C294A94D75A7D39A52 /* Inter_ExtraBoldItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = Inter_ExtraBoldItalic.ttf; path = ../assets/fonts/Inter_ExtraBoldItalic.ttf; sourceTree = "<group>"; };
-		52549CE5750348E0A0181946 /* Inter_SemiBoldItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = Inter_SemiBoldItalic.ttf; path = ../assets/fonts/Inter_SemiBoldItalic.ttf; sourceTree = "<group>"; };
-		52D38F04D47C4022AA3B2F31 /* Inter_BoldItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = Inter_BoldItalic.ttf; path = ../assets/fonts/Inter_BoldItalic.ttf; sourceTree = "<group>"; };
-		5AF73A982BFE0AE8E4572E86 /* Pods-translationCallApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-translationCallApp.debug.xcconfig"; path = "Target Support Files/Pods-translationCallApp/Pods-translationCallApp.debug.xcconfig"; sourceTree = "<group>"; };
-		69EDE66EDFC24697B9E7ED93 /* Inter_BlackItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = Inter_BlackItalic.ttf; path = ../assets/fonts/Inter_BlackItalic.ttf; sourceTree = "<group>"; };
-		6E987042A75448CE888F36A5 /* Inter_ThinItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = Inter_ThinItalic.ttf; path = ../assets/fonts/Inter_ThinItalic.ttf; sourceTree = "<group>"; };
+		29A4FAE59C0949549FEF1A04 /* Inter_Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = Inter_Regular.ttf; path = ../assets/fonts/Inter_Regular.ttf; sourceTree = "<group>"; };
+		4811E091FA9F483299C06306 /* Inter_SemiBold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = Inter_SemiBold.ttf; path = ../assets/fonts/Inter_SemiBold.ttf; sourceTree = "<group>"; };
+		4E24B2C294A94D75A7D39A52 /* Inter_ExtraBoldItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = Inter_ExtraBoldItalic.ttf; path = ../assets/fonts/Inter_ExtraBoldItalic.ttf; sourceTree = "<group>"; };
+		52549CE5750348E0A0181946 /* Inter_SemiBoldItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = Inter_SemiBoldItalic.ttf; path = ../assets/fonts/Inter_SemiBoldItalic.ttf; sourceTree = "<group>"; };
+		52D38F04D47C4022AA3B2F31 /* Inter_BoldItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = Inter_BoldItalic.ttf; path = ../assets/fonts/Inter_BoldItalic.ttf; sourceTree = "<group>"; };
+		69EDE66EDFC24697B9E7ED93 /* Inter_BlackItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = Inter_BlackItalic.ttf; path = ../assets/fonts/Inter_BlackItalic.ttf; sourceTree = "<group>"; };
+		6E987042A75448CE888F36A5 /* Inter_ThinItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = Inter_ThinItalic.ttf; path = ../assets/fonts/Inter_ThinItalic.ttf; sourceTree = "<group>"; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = translationCallApp/AppDelegate.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = translationCallApp/LaunchScreen.storyboard; sourceTree = "<group>"; };
-		8411510563766B98628C4A4B /* Pods-translationCallApp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-translationCallApp.release.xcconfig"; path = "Target Support Files/Pods-translationCallApp/Pods-translationCallApp.release.xcconfig"; sourceTree = "<group>"; };
-		8C159690C0524F7EB9F118AE /* Inter_Medium.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = Inter_Medium.ttf; path = ../assets/fonts/Inter_Medium.ttf; sourceTree = "<group>"; };
-		8CF17CB9B69F44C089DD0A44 /* Inter_ExtraLightItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = Inter_ExtraLightItalic.ttf; path = ../assets/fonts/Inter_ExtraLightItalic.ttf; sourceTree = "<group>"; };
-		8FBD18C75A7544E0BFD862BE /* Inter_Italic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = Inter_Italic.ttf; path = ../assets/fonts/Inter_Italic.ttf; sourceTree = "<group>"; };
-		91F1F6D71FA54342A1A279DE /* Inter_ExtraLight.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = Inter_ExtraLight.ttf; path = ../assets/fonts/Inter_ExtraLight.ttf; sourceTree = "<group>"; };
-		BD68475010F64F778CF1FA96 /* Inter_Black.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = Inter_Black.ttf; path = ../assets/fonts/Inter_Black.ttf; sourceTree = "<group>"; };
-		BF3BBCCCF0DF44A58C6C1E16 /* Inter_ExtraBold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = Inter_ExtraBold.ttf; path = ../assets/fonts/Inter_ExtraBold.ttf; sourceTree = "<group>"; };
-		C367B00401A14F09A3CFB39C /* Inter_MediumItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = Inter_MediumItalic.ttf; path = ../assets/fonts/Inter_MediumItalic.ttf; sourceTree = "<group>"; };
-		E92F9E42A23C4340AF7F933C /* Inter_Light.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = Inter_Light.ttf; path = ../assets/fonts/Inter_Light.ttf; sourceTree = "<group>"; };
-		EA8F88B2BDFD4373BAC7E273 /* Inter_Thin.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = Inter_Thin.ttf; path = ../assets/fonts/Inter_Thin.ttf; sourceTree = "<group>"; };
+		8C159690C0524F7EB9F118AE /* Inter_Medium.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = Inter_Medium.ttf; path = ../assets/fonts/Inter_Medium.ttf; sourceTree = "<group>"; };
+		8CF17CB9B69F44C089DD0A44 /* Inter_ExtraLightItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = Inter_ExtraLightItalic.ttf; path = ../assets/fonts/Inter_ExtraLightItalic.ttf; sourceTree = "<group>"; };
+		8FBD18C75A7544E0BFD862BE /* Inter_Italic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = Inter_Italic.ttf; path = ../assets/fonts/Inter_Italic.ttf; sourceTree = "<group>"; };
+		911B688E9309E694F937279E /* Pods-translationCallApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-translationCallApp.debug.xcconfig"; path = "Target Support Files/Pods-translationCallApp/Pods-translationCallApp.debug.xcconfig"; sourceTree = "<group>"; };
+		91F1F6D71FA54342A1A279DE /* Inter_ExtraLight.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = Inter_ExtraLight.ttf; path = ../assets/fonts/Inter_ExtraLight.ttf; sourceTree = "<group>"; };
+		ADC20F05F9858287EC7C6D90 /* Pods-translationCallApp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-translationCallApp.release.xcconfig"; path = "Target Support Files/Pods-translationCallApp/Pods-translationCallApp.release.xcconfig"; sourceTree = "<group>"; };
+		BD68475010F64F778CF1FA96 /* Inter_Black.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = Inter_Black.ttf; path = ../assets/fonts/Inter_Black.ttf; sourceTree = "<group>"; };
+		BF3BBCCCF0DF44A58C6C1E16 /* Inter_ExtraBold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = Inter_ExtraBold.ttf; path = ../assets/fonts/Inter_ExtraBold.ttf; sourceTree = "<group>"; };
+		C367B00401A14F09A3CFB39C /* Inter_MediumItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = Inter_MediumItalic.ttf; path = ../assets/fonts/Inter_MediumItalic.ttf; sourceTree = "<group>"; };
+		D41D788F8A650BFFAA002DD2 /* libPods-translationCallApp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-translationCallApp.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		E92F9E42A23C4340AF7F933C /* Inter_Light.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = Inter_Light.ttf; path = ../assets/fonts/Inter_Light.ttf; sourceTree = "<group>"; };
+		EA8F88B2BDFD4373BAC7E273 /* Inter_Thin.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = Inter_Thin.ttf; path = ../assets/fonts/Inter_Thin.ttf; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
-		F9D18DE2B6DC4519908F573B /* Inter_LightItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = Inter_LightItalic.ttf; path = ../assets/fonts/Inter_LightItalic.ttf; sourceTree = "<group>"; };
+		F9D18DE2B6DC4519908F573B /* Inter_LightItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = Inter_LightItalic.ttf; path = ../assets/fonts/Inter_LightItalic.ttf; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -68,7 +68,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3B440E164474EEF8D273D342 /* libPods-translationCallApp.a in Frameworks */,
+				688927C34C2CA291D63DC746 /* libPods-translationCallApp.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -91,7 +91,7 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				4757E28F8C5D8A7E28D16C06 /* libPods-translationCallApp.a */,
+				D41D788F8A650BFFAA002DD2 /* libPods-translationCallApp.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -119,7 +119,6 @@
 				6E987042A75448CE888F36A5 /* Inter_ThinItalic.ttf */,
 			);
 			name = Resources;
-			path = "";
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -155,8 +154,8 @@
 		BBD78D7AC51CEA395F1C20DB /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				5AF73A982BFE0AE8E4572E86 /* Pods-translationCallApp.debug.xcconfig */,
-				8411510563766B98628C4A4B /* Pods-translationCallApp.release.xcconfig */,
+				911B688E9309E694F937279E /* Pods-translationCallApp.debug.xcconfig */,
+				ADC20F05F9858287EC7C6D90 /* Pods-translationCallApp.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -168,13 +167,13 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "translationCallApp" */;
 			buildPhases = (
-				D62C157EC8099DE8D895FC4C /* [CP] Check Pods Manifest.lock */,
+				EC22527968D31C8E2964112A /* [CP] Check Pods Manifest.lock */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
-				498F87CEC60A1A41BE33B1ED /* [CP] Embed Pods Frameworks */,
-				1D011DA70F459340A963D2E6 /* [CP] Copy Pods Resources */,
+				374A08CE5E92B47EE99F2519 /* [CP] Embed Pods Frameworks */,
+				4159A6D9B07D0A35A50C6019 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -264,24 +263,7 @@
 			shellPath = /bin/sh;
 			shellScript = "set -e\n\nWITH_ENVIRONMENT=\"$REACT_NATIVE_PATH/scripts/xcode/with-environment.sh\"\nREACT_NATIVE_XCODE=\"$REACT_NATIVE_PATH/scripts/react-native-xcode.sh\"\n\n/bin/sh -c \"$WITH_ENVIRONMENT $REACT_NATIVE_XCODE\"\n";
 		};
-		1D011DA70F459340A963D2E6 /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-translationCallApp/Pods-translationCallApp-resources-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Copy Pods Resources";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-translationCallApp/Pods-translationCallApp-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-translationCallApp/Pods-translationCallApp-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		498F87CEC60A1A41BE33B1ED /* [CP] Embed Pods Frameworks */ = {
+		374A08CE5E92B47EE99F2519 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -298,7 +280,24 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-translationCallApp/Pods-translationCallApp-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		D62C157EC8099DE8D895FC4C /* [CP] Check Pods Manifest.lock */ = {
+		4159A6D9B07D0A35A50C6019 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-translationCallApp/Pods-translationCallApp-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-translationCallApp/Pods-translationCallApp-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-translationCallApp/Pods-translationCallApp-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		EC22527968D31C8E2964112A /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -336,7 +335,7 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 5AF73A982BFE0AE8E4572E86 /* Pods-translationCallApp.debug.xcconfig */;
+			baseConfigurationReference = 911B688E9309E694F937279E /* Pods-translationCallApp.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -357,7 +356,7 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.falavox;
 				PRODUCT_NAME = translationCallApp;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -368,7 +367,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 8411510563766B98628C4A4B /* Pods-translationCallApp.release.xcconfig */;
+			baseConfigurationReference = ADC20F05F9858287EC7C6D90 /* Pods-translationCallApp.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -388,7 +387,7 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.falavox;
 				PRODUCT_NAME = translationCallApp;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_VERSION = 5.0;

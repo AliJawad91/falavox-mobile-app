@@ -1,7 +1,7 @@
 /* eslint-disable react-native/no-inline-styles */
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useState } from "react";
-import { Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { moderateScale, moderateVerticalScale } from "react-native-size-matters";
 import { RootStackParamList } from "../../App";
@@ -18,11 +18,11 @@ import QrCodeIcon from "../../assets/icons/ic_qr_code.svg";
 type Props = NativeStackScreenProps<RootStackParamList, 'CreateAccount'>;
 
 function CreateAccountScreen({ navigation }: Props) {
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
-    const [hashTag, setHashTag] = useState('');
-    const [password, setPassword] = useState('');
-    const [secureTextEntry, setSecureTextEntry] = useState(true);
+    const [name, setName] = useState<string>('');
+    const [email, setEmail] = useState<string>('');
+    const [hashTag, setHashTag] = useState<string>('');
+    const [password, setPassword] = useState<string>('');
+    const [secureTextEntry, setSecureTextEntry] = useState<boolean>(true);
 
     const handleOnBackPress = () => {
         navigation.goBack();
@@ -72,99 +72,105 @@ function CreateAccountScreen({ navigation }: Props) {
 
                 </View>
 
-                <View style={style.contentStyle}>
+                <ScrollView
+                    contentContainerStyle={{ flexGrow: 1 }}
+                    showsVerticalScrollIndicator={false}>
 
-                    <Text style={style.fieldLabelStyle}>Name</Text>
+                    <View style={style.contentStyle}>
 
-                    <View style={style.fieldContainerStyle}>
+                        <Text style={style.fieldLabelStyle}>Name</Text>
 
-                        <TextInput
-                            style={style.fieldInputStyle}
-                            autoCapitalize="words"
-                            selectionHandleColor={cursorColor}
-                            cursorColor={cursorColor}
-                            autoCorrect={false}
-                            maxLength={30}
-                            submitBehavior="blurAndSubmit"
-                            value={name}
-                            onChangeText={updatedName => setName(updatedName)} />
+                        <View style={style.fieldContainerStyle}>
+
+                            <TextInput
+                                style={style.fieldInputStyle}
+                                autoCapitalize="words"
+                                selectionHandleColor={cursorColor}
+                                cursorColor={cursorColor}
+                                autoCorrect={false}
+                                maxLength={30}
+                                submitBehavior="blurAndSubmit"
+                                value={name}
+                                onChangeText={updatedName => setName(updatedName)} />
+
+                        </View>
+
+                        <Text style={style.fieldLabelStyle}>What's your Email?</Text>
+
+                        <View style={style.fieldContainerStyle}>
+
+                            <TextInput
+                                style={style.fieldInputStyle}
+                                selectionHandleColor={cursorColor}
+                                cursorColor={cursorColor}
+                                autoCorrect={false}
+                                maxLength={30}
+                                submitBehavior="blurAndSubmit"
+                                value={email}
+                                onChangeText={updatedEmail => setEmail(updatedEmail)} />
+
+                        </View>
+
+                        <Text style={style.fieldInfoStyle}>You'll need to confirm this email later</Text>
+
+                        <Text style={style.fieldLabelStyle}>#Tag</Text>
+
+                        <View style={style.fieldContainerStyle}>
+
+                            <TextInput
+                                style={style.fieldInputStyle}
+                                selectionHandleColor={cursorColor}
+                                cursorColor={cursorColor}
+                                autoCorrect={false}
+                                maxLength={30}
+                                submitBehavior="blurAndSubmit"
+                                value={hashTag}
+                                onChangeText={updateHashTag => setHashTag(updateHashTag)} />
+
+                        </View>
+
+                        <Text style={style.fieldInfoStyle}>Create a unique #Tag</Text>
+
+                        <Text style={style.fieldLabelStyle}>Create a password</Text>
+
+                        <View style={style.fieldContainerStyle}>
+
+                            <TextInput
+                                style={style.fieldInputStyle}
+                                selectionHandleColor={cursorColor}
+                                cursorColor={cursorColor}
+                                autoCorrect={false}
+                                maxLength={30}
+                                secureTextEntry={secureTextEntry}
+                                submitBehavior="blurAndSubmit"
+                                value={password}
+                                onChangeText={updatedPassword => setPassword(updatedPassword)} />
+
+                            {renderEyeIcon()}
+
+                        </View>
+
+                        <Text style={style.fieldInfoStyle}>Use atleast 8 characters</Text>
+
+                        <Pressable
+                            style={({ pressed }) => [style.createAccountButtonStyle, { backgroundColor: pressed ? 'white' : lightButtonBackground }]}
+                            onPress={null}>
+
+                            <Text style={style.createAccountButtonTextStyle}>Create an account</Text>
+
+                        </Pressable>
+
+                        <View style={style.qrCodeContainerStyle}>
+
+                            <QrCodeIcon width={moderateScale(55)} height={moderateVerticalScale(55)} />
+
+                            <Text style={style.qrCodeTextStyle}>Your QR code</Text>
+
+                        </View>
 
                     </View>
 
-                    <Text style={style.fieldLabelStyle}>What's your Email?</Text>
-
-                    <View style={style.fieldContainerStyle}>
-
-                        <TextInput
-                            style={style.fieldInputStyle}
-                            selectionHandleColor={cursorColor}
-                            cursorColor={cursorColor}
-                            autoCorrect={false}
-                            maxLength={30}
-                            submitBehavior="blurAndSubmit"
-                            value={email}
-                            onChangeText={updatedEmail => setEmail(updatedEmail)} />
-
-                    </View>
-
-                    <Text style={style.fieldInfoStyle}>You'll need to confirm this email later</Text>
-
-                    <Text style={style.fieldLabelStyle}>#Tag</Text>
-
-                    <View style={style.fieldContainerStyle}>
-
-                        <TextInput
-                            style={style.fieldInputStyle}
-                            selectionHandleColor={cursorColor}
-                            cursorColor={cursorColor}
-                            autoCorrect={false}
-                            maxLength={30}
-                            submitBehavior="blurAndSubmit"
-                            value={hashTag}
-                            onChangeText={updateHashTag => setHashTag(updateHashTag)} />
-
-                    </View>
-
-                    <Text style={style.fieldInfoStyle}>Create a unique #Tag</Text>
-
-                    <Text style={style.fieldLabelStyle}>Create a password</Text>
-
-                    <View style={style.fieldContainerStyle}>
-
-                        <TextInput
-                            style={style.fieldInputStyle}
-                            selectionHandleColor={cursorColor}
-                            cursorColor={cursorColor}
-                            autoCorrect={false}
-                            maxLength={30}
-                            secureTextEntry={secureTextEntry}
-                            submitBehavior="blurAndSubmit"
-                            value={password}
-                            onChangeText={updatedPassword => setPassword(updatedPassword)} />
-
-                        {renderEyeIcon()}
-
-                    </View>
-
-                    <Text style={style.fieldInfoStyle}>Use atleast 8 characters</Text>
-
-                    <Pressable
-                        style={({ pressed }) => [style.createAccountButtonStyle, { backgroundColor: pressed ? 'white' : lightButtonBackground }]}
-                        onPress={null}>
-
-                        <Text style={style.createAccountButtonTextStyle}>Create an account</Text>
-
-                    </Pressable>
-
-                    <View style={style.qrCodeContainerStyle}>
-
-                        <QrCodeIcon width={moderateScale(55)} height={moderateVerticalScale(55)} />
-
-                        <Text style={style.qrCodeTextStyle}>Your QR code</Text>
-
-                    </View>
-
-                </View>
+                </ScrollView>
 
             </View>
 
@@ -269,6 +275,7 @@ const style = StyleSheet.create({
         start: 0,
         end: 0,
         bottom: 0,
+        marginBottom: moderateVerticalScale(20),
         alignItems: 'center',
         justifyContent: 'center'
     },
