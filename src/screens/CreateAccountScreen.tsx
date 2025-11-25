@@ -20,7 +20,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'CreateAccount'>;
 function CreateAccountScreen({ navigation }: Props) {
     const [name, setName] = useState<string>('');
     const [email, setEmail] = useState<string>('');
-    const [hashTag, setHashTag] = useState<string>('');
+    const [voiceID, setVoiceID] = useState<string>('');
     const [password, setPassword] = useState<string>('');
     const [secureTextEntry, setSecureTextEntry] = useState<boolean>(true);
 
@@ -113,7 +113,7 @@ function CreateAccountScreen({ navigation }: Props) {
 
                         <Text style={style.fieldInfoStyle}>You'll need to confirm this email later</Text>
 
-                        <Text style={style.fieldLabelStyle}>#Tag</Text>
+                        <Text style={style.fieldLabelStyle}>Voice ID</Text>
 
                         <View style={style.fieldContainerStyle}>
 
@@ -124,12 +124,12 @@ function CreateAccountScreen({ navigation }: Props) {
                                 autoCorrect={false}
                                 maxLength={30}
                                 submitBehavior="blurAndSubmit"
-                                value={hashTag}
-                                onChangeText={updateHashTag => setHashTag(updateHashTag)} />
+                                value={voiceID}
+                                onChangeText={updateVoiceID => setVoiceID(updateVoiceID)} />
 
                         </View>
 
-                        <Text style={style.fieldInfoStyle}>Create a unique #Tag</Text>
+                        <Text style={style.fieldInfoStyle}>Create a unique Voice ID</Text>
 
                         <Text style={style.fieldLabelStyle}>Create a password</Text>
 
@@ -160,13 +160,13 @@ function CreateAccountScreen({ navigation }: Props) {
 
                         </Pressable>
 
-                        <View style={style.qrCodeContainerStyle}>
+                        {/* <View style={style.qrCodeContainerStyle}>
 
                             <QrCodeIcon width={moderateScale(55)} height={moderateVerticalScale(55)} />
 
                             <Text style={style.qrCodeTextStyle}>Your QR code</Text>
 
-                        </View>
+                        </View> */}
 
                     </View>
 
