@@ -24,19 +24,57 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
-	<key>NSMicrophoneUsageDescription</key>
-    <string>We need access to your microphone to capture audio during calls and translations.</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
-		<false/>
-		<key>NSAllowsLocalNetworking</key>
 		<true/>
+		<key>NSExceptionDomains</key>
+		<dict>
+			<key>192.168.18.140</key>
+			<dict>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+				<key>NSTemporaryExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+				<key>NSTemporaryExceptionMinimumTLSVersion</key>
+				<string>TLSv1.1</string>
+			</dict>
+			<key>localhost</key>
+			<dict>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+				<key>NSTemporaryExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+			</dict>
+		</dict>
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string></string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>We need access to your microphone to capture audio during calls and translations.</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
+	<key>UIAppFonts</key>
+	<array>
+		<string>Inter_Black.ttf</string>
+		<string>Inter_BlackItalic.ttf</string>
+		<string>Inter_Bold.ttf</string>
+		<string>Inter_BoldItalic.ttf</string>
+		<string>Inter_ExtraBold.ttf</string>
+		<string>Inter_ExtraBoldItalic.ttf</string>
+		<string>Inter_ExtraLight.ttf</string>
+		<string>Inter_ExtraLightItalic.ttf</string>
+		<string>Inter_Italic.ttf</string>
+		<string>Inter_Light.ttf</string>
+		<string>Inter_LightItalic.ttf</string>
+		<string>Inter_Medium.ttf</string>
+		<string>Inter_MediumItalic.ttf</string>
+		<string>Inter_Regular.ttf</string>
+		<string>Inter_SemiBold.ttf</string>
+		<string>Inter_SemiBoldItalic.ttf</string>
+		<string>Inter_Thin.ttf</string>
+		<string>Inter_ThinItalic.ttf</string>
+	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIRequiredDeviceCapabilities</key>
@@ -49,32 +87,9 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>UIUserInterfaceStyle</key>
+	<string>Light</string>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
-	<key>NSAppTransportSecurity</key>
-	<dict>
-	<key>NSAllowsArbitraryLoads</key>
-	<true/>
-	<key>NSExceptionDomains</key>
-	<dict>
-		<key>192.168.18.140</key>
-		<dict>
-		<key>NSIncludesSubdomains</key>
-		<true/>
-		<key>NSTemporaryExceptionAllowsInsecureHTTPLoads</key>
-		<true/>
-		<key>NSTemporaryExceptionMinimumTLSVersion</key>
-		<string>TLSv1.1</string>
-		</dict>
-		<key>localhost</key>
-		<dict>
-		<key>NSIncludesSubdomains</key>
-		<true/>
-		<key>NSTemporaryExceptionAllowsInsecureHTTPLoads</key>
-		<true/>
-		</dict>
-	</dict>
-	</dict>
-	
 </dict>
 </plist>
