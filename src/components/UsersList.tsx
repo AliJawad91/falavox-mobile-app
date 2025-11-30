@@ -3,7 +3,6 @@ import React, {
   useCallback,
   useRef,
   useEffect,
-  useState
 } from 'react';
 import {
   View,
@@ -27,12 +26,10 @@ interface UsersListProps {
   onBack?: () => void;
 }
 
-// const UsersList: React.FC = () => {
-// const UsersList: React.FC<UsersListProps> = ({ onUserAdded }) => {
+
 const UsersList: React.FC<UsersListProps> = ({ onUserAdded, onBack }) => {
-
+  
   const dispatch = useAppDispatch();
-
   const {
     users,
     isLoading,
@@ -42,7 +39,6 @@ const UsersList: React.FC<UsersListProps> = ({ onUserAdded, onBack }) => {
     error
   } = useAppSelector(state => state.users);
 
-  console.log(users, "items");
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null);
 
   // Debounced search by userName
@@ -123,9 +119,8 @@ const UsersList: React.FC<UsersListProps> = ({ onUserAdded, onBack }) => {
   }, [isLoading, searchLoading, pagination, search, dispatch]);
 
   const renderItem = useCallback(({ item }: { item: User }) => (
-    // <UserItem user={item} />
-    <UserItem user={item} onAddFavorite={handleAddFavorite} />
 
+    <UserItem user={item} onAddFavorite={handleAddFavorite} />
   ), [handleAddFavorite]);
 
   const keyExtractor = useCallback((item: User) => item.id, []);
@@ -210,9 +205,6 @@ const UsersList: React.FC<UsersListProps> = ({ onUserAdded, onBack }) => {
 };
 
 // User Item Component - Displaying userName as Voice ID
-// interface UserItemProps {
-//   user: User;
-// }
 interface UserItemProps {
   user: User;
   onAddFavorite: (userId: string) => void;

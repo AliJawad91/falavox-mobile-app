@@ -3,9 +3,7 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { 
   User, 
   UsersState, 
-  UsersResponse, 
   FetchUsersParams,
-  ApiResponse
 } from '../../types';
 import { apiService } from '../../services/api';
 

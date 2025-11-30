@@ -1,6 +1,7 @@
 // src/services/usersApi.ts
 import axios from 'axios';
 import { store } from '../store/index';
+import { logout, refreshTokens } from '../features/auth/authSlice';
 
 const API_BASE_URL = 'https://untreated-nonvisional-neriah.ngrok-free.dev/api';
 
