@@ -1,7 +1,7 @@
 /* eslint-disable react-native/no-inline-styles */
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { useState } from "react";
-import { Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { useEffect, useState } from "react";
+import { Alert, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { moderateScale, moderateVerticalScale } from "react-native-size-matters";
 import { RootStackParamList } from "../../App";
@@ -12,13 +12,19 @@ import BackIcon from "../../assets/icons/ic_back.svg";
 import EyeOffIcon from "../../assets/icons/ic_eye_off.svg";
 // @ts-ignore: Module declaration for SVGs is missing in the project types
 import EyeOnIcon from "../../assets/icons/ic_eye_on.svg";
+import { useAppDispatch, useAppSelector } from "../hooks/redux";
+import { clearError, loginUser } from "../features/auth/authSlice";
+import TokenService from "../services/tokenService";
 
 type Props = NativeStackScreenProps<RootStackParamList, 'LogIn'>;
 
 function LogInScreen({ navigation }: Props) {
-    const [hashTag, setHashTag] = useState('');
+    const [voiceID, setVoiceID] = useState<string>('');
     const [password, setPassword] = useState('');
     const [secureTextEntry, setSecureTextEntry] = useState(true);
+
+    const dispatch = useAppDispatch();
+    const { isLoading, error, isAuthenticated } = useAppSelector((state) => state.auth);
 
     const handleOnBackPress = () => {
         navigation.goBack();
@@ -48,6 +54,61 @@ function LogInScreen({ navigation }: Props) {
         setSecureTextEntry(!secureTextEntry);
     };
 
+    const handleLogin = async () => {
+        console.log("handle Login called");
+        
+        if (!voiceID || !password) {
+            Alert.alert('Error', 'Please fill in all fields');
+            return;
+        }
+
+        try {
+            // Dispatch register action
+            await dispatch(loginUser({
+                userName: voiceID, // Using voiceID as username
+                password: password,
+                // Add other fields as needed by your API
+            })).unwrap();
+            const testTokenService = await TokenService.getAccessToken();
+            console.log(testTokenService,"testTokenService");
+            
+            // Success - navigation will be handled by useEffect below
+        } catch (error) {
+            // Error is handled by the slice and will show in the Alert via useEffect
+        }
+
+    }
+
+    useEffect(() => {
+        if (isAuthenticated) {
+            // Alert.alert(
+            //     'Success',
+            //     'Account created successfully!',
+            //     [
+            //         {
+            //             text: 'OK',
+            //             onPress: () => {
+                            // Navigate to the main app screen or wherever you want
+                            // For example:
+                            navigation.replace('UserLibrary');
+                            // Or reset the navigation stack:
+                            // navigation.reset({
+                            //     index: 0,
+                            //     routes: [{ name: 'Main' }], // Replace 'Main' with your main screen name
+                            // });
+                //         }
+                //     }
+                // ]
+            // );
+        }
+    }, [isAuthenticated, navigation]);
+
+    useEffect(() => {
+        if (error) {
+            Alert.alert('Registration Error', error);
+            dispatch(clearError());
+        }
+    }, [error, dispatch]);
     return (
         <SafeAreaView style={style.safeAreaStyle}>
 
@@ -81,8 +142,8 @@ function LogInScreen({ navigation }: Props) {
                             autoCorrect={false}
                             maxLength={30}
                             submitBehavior="blurAndSubmit"
-                            value={hashTag}
-                            onChangeText={updateHashTag => setHashTag(updateHashTag)} />
+                            value={voiceID}
+                            onChangeText={updateVoiceID => setVoiceID(updateVoiceID)} />
 
                     </View>
 
@@ -104,14 +165,20 @@ function LogInScreen({ navigation }: Props) {
                         {renderEyeIcon()}
 
                     </View>
+                    {isLoading ? (
+                        <View style={style.loadingContainer}>
+                            {/* <ActivityIndicator size="large" color={lightButtonBackground} /> */}
+                            <Text style={style.loadingText}>Logging In...</Text>
+                        </View>
+                    ) : (
+                        <Pressable
+                            style={({ pressed }) => [style.createAccountButtonStyle, { backgroundColor: pressed ? 'white' : lightButtonBackground }]}
+                            onPress={handleLogin}>
 
-                    <Pressable
-                        style={({ pressed }) => [style.createAccountButtonStyle, { backgroundColor: pressed ? 'white' : lightButtonBackground }]}
-                        onPress={null}>
+                            <Text style={style.createAccountButtonTextStyle}>Log In</Text>
 
-                        <Text style={style.createAccountButtonTextStyle}>Log In</Text>
-
-                    </Pressable>
+                        </Pressable>
+                    )}
 
                 </View>
 
@@ -144,6 +211,18 @@ const style = StyleSheet.create({
     contentStyle: {
         flex: 1,
         paddingVertical: moderateVerticalScale(20),
+    },
+    loadingContainer: {
+        marginTop: moderateVerticalScale(40),
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
+    loadingText: {
+        fontFamily: Platform.select({ ios: 'Inter 18pt', android: 'Inter_Regular' }),
+        fontWeight: Platform.select({ ios: '400' }),
+        fontSize: moderateScale(14),
+        color: text,
+        marginTop: moderateVerticalScale(10)
     },
     fieldLabelStyle: {
         fontFamily: Platform.select({ ios: 'Inter 18pt', android: 'Inter_Bold' }),

@@ -1,7 +1,7 @@
 /* eslint-disable react-native/no-inline-styles */
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { useState } from "react";
-import { Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { useEffect, useState } from "react";
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { moderateScale, moderateVerticalScale } from "react-native-size-matters";
 import { RootStackParamList } from "../../App";
@@ -14,15 +14,23 @@ import EyeOffIcon from "../../assets/icons/ic_eye_off.svg";
 import EyeOnIcon from "../../assets/icons/ic_eye_on.svg";
 // @ts-ignore: Module declaration for SVGs is missing in the project types
 import QrCodeIcon from "../../assets/icons/ic_qr_code.svg";
+import { clearError, registerUser } from "../features/auth/authSlice";
+import { useAppDispatch, useAppSelector } from "../hooks/redux";
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CreateAccount'>;
 
 function CreateAccountScreen({ navigation }: Props) {
     const [name, setName] = useState<string>('');
+    const [firstName, setFirstName] = useState<string>('');
+    const [lastName, setLastName] = useState<string>('');
     const [email, setEmail] = useState<string>('');
     const [voiceID, setVoiceID] = useState<string>('');
     const [password, setPassword] = useState<string>('');
     const [secureTextEntry, setSecureTextEntry] = useState<boolean>(true);
+
+    // Redux hooks
+    const dispatch = useAppDispatch();
+    const { isLoading, error, isAuthenticated } = useAppSelector((state) => state.auth);
 
     const handleOnBackPress = () => {
         navigation.goBack();
@@ -52,6 +60,81 @@ function CreateAccountScreen({ navigation }: Props) {
         setSecureTextEntry(!secureTextEntry);
     };
 
+
+
+    const handleSignup = async () => {
+
+        if (!firstName || !lastName || !email || !voiceID || !password) {
+            Alert.alert('Error', 'Please fill in all fields');
+            return;
+        }
+
+        if (password.length < 8) {
+            Alert.alert('Error', 'Password must be at least 8 characters long');
+            return;
+        }
+
+        if (!validateEmail(email)) {
+            Alert.alert('Error', 'Please enter a valid email address');
+            return;
+        }
+
+        try {
+            // Dispatch register action
+            await dispatch(registerUser({
+                userName: voiceID, // Using voiceID as username
+                email: email,
+                password: password,
+                firstName: firstName, // Extract first name
+                lastName: lastName, // Extract last name (if any)
+                // Add other fields as needed by your API
+            })).unwrap();
+
+            // Success - navigation will be handled by useEffect below
+        } catch (error) {
+            // Error is handled by the slice and will show in the Alert via useEffect
+        }
+    };
+
+    const validateEmail = (email: string): boolean => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    };
+
+    // Handle navigation after successful registration
+    useEffect(() => {
+        if (isAuthenticated ) {
+            Alert.alert(
+                'Success',
+                'Account created successfully!',
+                [
+                    {
+                        text: 'OK',
+                        onPress: () => {
+                            // Navigate to the main app screen or wherever you want
+                            // For example:
+                            navigation.replace('UserLibrary');
+                            // Or reset the navigation stack:
+                            // navigation.reset({
+                            //     index: 0,
+                            //     routes: [{ name: 'Main' }], // Replace 'Main' with your main screen name
+                            // });
+                        }
+                    }
+                ]
+            );
+        }
+    }, [isAuthenticated, navigation]);
+
+    // Handle errors
+    useEffect(() => {
+        if (error) {
+            Alert.alert('Registration Error', error);
+            dispatch(clearError());
+        }
+    }, [error, dispatch]);
+
+
     return (
         <SafeAreaView style={style.safeAreaStyle}>
 
@@ -78,7 +161,7 @@ function CreateAccountScreen({ navigation }: Props) {
 
                     <View style={style.contentStyle}>
 
-                        <Text style={style.fieldLabelStyle}>Name</Text>
+                        <Text style={style.fieldLabelStyle}>First Name</Text>
 
                         <View style={style.fieldContainerStyle}>
 
@@ -90,8 +173,25 @@ function CreateAccountScreen({ navigation }: Props) {
                                 autoCorrect={false}
                                 maxLength={30}
                                 submitBehavior="blurAndSubmit"
-                                value={name}
-                                onChangeText={updatedName => setName(updatedName)} />
+                                value={firstName}
+                                onChangeText={updatedName => setFirstName(updatedName)} />
+
+                        </View>
+
+                        <Text style={style.fieldLabelStyle}>Last Name</Text>
+
+                        <View style={style.fieldContainerStyle}>
+
+                            <TextInput
+                                style={style.fieldInputStyle}
+                                autoCapitalize="words"
+                                selectionHandleColor={cursorColor}
+                                cursorColor={cursorColor}
+                                autoCorrect={false}
+                                maxLength={30}
+                                submitBehavior="blurAndSubmit"
+                                value={lastName}
+                                onChangeText={updatedName => setLastName(updatedName)} />
 
                         </View>
 
@@ -151,14 +251,31 @@ function CreateAccountScreen({ navigation }: Props) {
                         </View>
 
                         <Text style={style.fieldInfoStyle}>Use atleast 8 characters</Text>
+                        {isLoading ? (
+                            <View style={style.loadingContainer}>
+                                {/* <ActivityIndicator size="large" color={lightButtonBackground} /> */}
+                                <Text style={style.loadingText}>Creating your account...</Text>
+                            </View>
+                        ) : (
+ 
+                            <Pressable
+                                style={({ pressed }) => [style.createAccountButtonStyle, { backgroundColor: pressed ? 'white' : lightButtonBackground }]}
+                                onPress={() => {
+                                    // console.log("Create account button pressed");
+                                    // console.log("First Name:", firstName);
+                                    // console.log("Last Name:", lastName);
+                                    // console.log("Email:", email);
+                                    // console.log("Voice ID:", voiceID);
+                                    // console.log("Password:", password);
+                                    handleSignup();
+                                }}
+                                disabled={!firstName || !lastName || !email || !voiceID || !password || isLoading}
+                            >
+                                <Text style={style.createAccountButtonTextStyle}>Create an account</Text>
 
-                        <Pressable
-                            style={({ pressed }) => [style.createAccountButtonStyle, { backgroundColor: pressed ? 'white' : lightButtonBackground }]}
-                            onPress={null}>
-
-                            <Text style={style.createAccountButtonTextStyle}>Create an account</Text>
-
-                        </Pressable>
+                            </Pressable>
+                        )
+                        }
 
                         {/* <View style={style.qrCodeContainerStyle}>
 
@@ -269,6 +386,18 @@ const style = StyleSheet.create({
         fontWeight: Platform.select({ ios: '400' }),
         fontSize: moderateScale(13),
         color: lightButtonText
+    },
+    loadingContainer: {
+        marginTop: moderateVerticalScale(40),
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
+    loadingText: {
+        fontFamily: Platform.select({ ios: 'Inter 18pt', android: 'Inter_Regular' }),
+        fontWeight: Platform.select({ ios: '400' }),
+        fontSize: moderateScale(14),
+        color: text,
+        marginTop: moderateVerticalScale(10)
     },
     qrCodeContainerStyle: {
         position: 'absolute',
