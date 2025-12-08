@@ -40,7 +40,7 @@ export default function JoinScreen({ navigation }: Props) {
         if(!data.token) throw new Error("Unsuccessfull Token Generation .");  
         navigation.navigate('Call', {
           channel,
-          language,
+        //   language,
           channelTokenData: data,
           uid: Number(data.uid),
           expiresAt: data.expiresAt,

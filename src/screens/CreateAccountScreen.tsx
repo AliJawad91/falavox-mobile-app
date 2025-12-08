@@ -1,5 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useEffect, useState } from "react";
 import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -26,7 +27,10 @@ function CreateAccountScreen({ navigation }: Props) {
     const [email, setEmail] = useState<string>('');
     const [voiceID, setVoiceID] = useState<string>('');
     const [password, setPassword] = useState<string>('');
+    const [confirmPassword, setConfirmPassword] = useState<string>('');
     const [secureTextEntry, setSecureTextEntry] = useState<boolean>(true);
+    const [secureConfirmPasswordEntry, setSecureConfirmPasswordEntry] = useState<boolean>(true);
+
 
     // Redux hooks
     const dispatch = useAppDispatch();
@@ -55,14 +59,37 @@ function CreateAccountScreen({ navigation }: Props) {
 
         </Pressable>
     );
+    const renderConfirmPasswordEyeIcon = () => (
+        <Pressable
+            style={({ pressed }) => [pressed ? style.pressedSecureTextEntryButtonStyle : style.secureTextEntryButtonStyle]}
+            onPress={onConfirmPasswordEyePress}>
+
+            {secureConfirmPasswordEntry ? (
+                <EyeOnIcon
+                    style={{ color: icon }}
+                    width={moderateScale(24)}
+                    height={moderateVerticalScale(24)} />
+            ) : (
+                <EyeOffIcon
+                    style={{ color: icon }}
+                    width={moderateScale(24)}
+                    height={moderateVerticalScale(24)} />
+            )}
+
+        </Pressable>
+    );
 
     const onEyeIconPress = () => {
         setSecureTextEntry(!secureTextEntry);
     };
 
-
+    const onConfirmPasswordEyePress = () => {
+        setSecureConfirmPasswordEntry(!secureConfirmPasswordEntry)
+    }
 
     const handleSignup = async () => {
+        console.log("handleSignup");
+        
 
         if (!firstName || !lastName || !email || !voiceID || !password) {
             Alert.alert('Error', 'Please fill in all fields');
@@ -79,6 +106,9 @@ function CreateAccountScreen({ navigation }: Props) {
             return;
         }
 
+        if (!validateConfirmPassword()){
+            return Alert.alert('Error','Please make sure password & confirm password should be identical')
+        }
         try {
             // Dispatch register action
             await dispatch(registerUser({
@@ -101,9 +131,12 @@ function CreateAccountScreen({ navigation }: Props) {
         return emailRegex.test(email);
     };
 
+    const validateConfirmPassword = ():boolean=>{
+        return password ===confirmPassword
+    }
     // Handle navigation after successful registration
     useEffect(() => {
-        if (isAuthenticated ) {
+        if (isAuthenticated) {
             Alert.alert(
                 'Success',
                 'Account created successfully!',
@@ -155,9 +188,16 @@ function CreateAccountScreen({ navigation }: Props) {
 
                 </View>
 
-                <ScrollView
+                {/* <ScrollView
                     contentContainerStyle={{ flexGrow: 1 }}
-                    showsVerticalScrollIndicator={false}>
+                    showsVerticalScrollIndicator={false}> */}
+                <KeyboardAwareScrollView
+                    contentContainerStyle={{ flexGrow: 1 }}
+                    enableOnAndroid={true}
+                    extraScrollHeight={60}     // pushes screen up when keyboard opens
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}
+                >
 
                     <View style={style.contentStyle}>
 
@@ -249,7 +289,24 @@ function CreateAccountScreen({ navigation }: Props) {
                             {renderEyeIcon()}
 
                         </View>
+                        <Text style={style.fieldLabelStyle}>Confirm password</Text>
 
+                        <View style={style.fieldContainerStyle}>
+
+                            <TextInput
+                                style={style.fieldInputStyle}
+                                selectionHandleColor={cursorColor}
+                                cursorColor={cursorColor}
+                                autoCorrect={false}
+                                maxLength={30}
+                                secureTextEntry={secureConfirmPasswordEntry}
+                                submitBehavior="blurAndSubmit"
+                                value={confirmPassword}
+                                onChangeText={updatedPassword => setConfirmPassword(updatedPassword)} />
+
+                            {renderConfirmPasswordEyeIcon()}
+
+                        </View>
                         <Text style={style.fieldInfoStyle}>Use atleast 8 characters</Text>
                         {isLoading ? (
                             <View style={style.loadingContainer}>
@@ -257,7 +314,7 @@ function CreateAccountScreen({ navigation }: Props) {
                                 <Text style={style.loadingText}>Creating your account...</Text>
                             </View>
                         ) : (
- 
+
                             <Pressable
                                 style={({ pressed }) => [style.createAccountButtonStyle, { backgroundColor: pressed ? 'white' : lightButtonBackground }]}
                                 onPress={() => {
@@ -287,7 +344,8 @@ function CreateAccountScreen({ navigation }: Props) {
 
                     </View>
 
-                </ScrollView>
+                    {/* </ScrollView> */}
+                </KeyboardAwareScrollView>
 
             </View>
 

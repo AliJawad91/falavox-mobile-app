@@ -107,6 +107,7 @@ export interface AuthState {
 
 export interface User {
   id: string;
+  agoraId:number;
   userName: string; // Used for Voice IDs
   email: string;
   firstName?: string;

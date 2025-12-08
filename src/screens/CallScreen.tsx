@@ -25,7 +25,9 @@ export default function CallScreen({ route, navigation }: Props) {
 
     // Removed temp token
     const engineRef = useRef<IRtcEngine | null>(null);
-    const { channel, language, channelTokenData, uid, expiresAt } = route.params;
+    const { channel, channelTokenData, uid, expiresAt } = route.params;
+    console.log(route.params,"route.params");
+    
     const [tokenExpiry, setTokenExpiry] = useState<number | null>(expiresAt || null);
     const socket = useRef<any>(null);
     console.log(tokenExpiry, channel, "tokenExpiry, channel out useEffect");

@@ -2,7 +2,8 @@
 import React, {
   useCallback,
   useRef,
-  useEffect
+  useEffect,
+  useState
 } from 'react';
 import {
   View,
@@ -13,10 +14,10 @@ import {
   Alert,
 } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
-import { useFocusEffect } from '@react-navigation/native';
+import { NavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { moderateScale, moderateVerticalScale } from 'react-native-size-matters';
 
-import { User } from '../types/api'; // Import from your existing types
+import { TokenApiResponse, User } from '../types/api'; // Import from your existing types
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
 import {
   fetchFavorites,
@@ -26,15 +27,23 @@ import {
   blackText,
   primaryButtonBackground,
 } from '../utils/colors';
+import { RootStackParamList } from '../../App';
+import { APP_CONFIG, fetchWithTimeout, withBase } from '../config';
+import { logger } from '../utils/logger';
 
 interface FavoritesListProps {
   onShowUserList?: () => void;
+  // navigation: NavigationProp<RootStackParamList, 'UserLibrary'>;
+
 }
 // const FavoritesList: React.FC = () => {
 const FavoritesList: React.FC<FavoritesListProps> = ({ onShowUserList }) => {
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
   const dispatch = useAppDispatch();
   const listRef = useRef<any>(null);
+  const [callJoinLoading, setCallJoinLoading] = useState(false);
+
   const shouldScrollToTop = useRef<boolean>(false);
 
   const {
@@ -43,22 +52,21 @@ const FavoritesList: React.FC<FavoritesListProps> = ({ onShowUserList }) => {
     pagination,
     error
   } = useAppSelector(state => state.userFavorites);
+  const me = useAppSelector(state => state.userProfile.profile);
 
-  console.log(favorites, "favorites items");
-
-  // Load initial favorites on mount
   useEffect(() => {
-    console.log("fetchFavorites useEffect");
-    
-    dispatch(fetchFavorites({ page: 1, limit: 50 }));
-  }, [dispatch]);
+    if (me?.id) {
+      dispatch(fetchFavorites({ page: 1, limit: 50 }));
+    }
+  }, [me?.id, dispatch]);
 
-  // Refetch favorites when component comes into focus (e.g., when navigating back from UsersList)
   useFocusEffect(
     useCallback(() => {
-      shouldScrollToTop.current = true; // Mark that we should scroll after refetch
-      dispatch(fetchFavorites({ page: 1, limit: 50 }));
-    }, [dispatch])
+      if (me?.id) {
+        shouldScrollToTop.current = true;
+        dispatch(fetchFavorites({ page: 1, limit: 50 }));
+      }
+    }, [dispatch, me?.id])
   );
 
   // Scroll to top when favorites are loaded after refetch (e.g., after adding a new favorite)
@@ -74,14 +82,16 @@ const FavoritesList: React.FC<FavoritesListProps> = ({ onShowUserList }) => {
 
   // Load more data
   const loadMore = useCallback(() => {
+    if (me?.id) {
 
-    if (isLoading || !pagination.hasMore) return;
+      if (isLoading || !pagination.hasMore) return;
 
-    const nextPage = pagination.currentPage + 1;
-    dispatch(fetchFavorites({
-      page: nextPage,
-      limit: 50
-    }));
+      const nextPage = pagination.currentPage + 1;
+      dispatch(fetchFavorites({
+        page: nextPage,
+        limit: 50
+      }));
+    }
   }, [isLoading, pagination, dispatch]);
 
   // Remove favorite with confirmation
@@ -103,8 +113,109 @@ const FavoritesList: React.FC<FavoritesListProps> = ({ onShowUserList }) => {
     );
   }, [dispatch]);
 
+  // Utility function to generate consistent channel name
+  const generateChannelName = (user1: string, user2: string) => {
+    const users = [user1, user2].sort(); // Sort alphabetically
+    return `${users[0]}_${users[1]}`;
+  };
+
+  const generateToken = async (channelName: string,) => {
+    try {
+      setCallJoinLoading(true);
+      // const url = withBase(`${APP_CONFIG.TOKEN_ENDPOINT}?channel=${encodeURIComponent(channelName)}`);
+      const uid = me?.agoraId;       // <-- pass this in API
+      console.log(typeof uid, "typeee");
+
+      if (!uid) throw new Error("Agora UID not found");
+
+      const url = withBase(
+        `${APP_CONFIG.TOKEN_ENDPOINT}?channel=${encodeURIComponent(channelName)}&uid=${uid}`
+      );
+
+      const res = await fetchWithTimeout(url, {
+        headers: { 'ngrok-skip-browser-warning': 'true' },
+        timeoutMs: APP_CONFIG.REQUEST_TIMEOUT_MS,
+      });
+      // logger.debug('Token response status', res.status);
+
+      if (!res.ok) throw new Error('Token request failed');
+      const { data } = (await res.json()) as TokenApiResponse; // { token, uid, channel, expiresAt }
+      // logger.debug('Token data', data);
+      console.log('Token data', data);
+
+      setCallJoinLoading(false);
+      if (!data.token) throw new Error("Unsuccessfull Token Generation .");
+      //get user id
+      return data;
+      // navigation.navigate('Call', {
+      //   channel: channelName,
+      //   // language,
+      //   channelTokenData: data,
+      //   uid: me?.agoraId || Number(data.uid),
+      //   // uid: Number(data.uid),
+      //   expiresAt: data.expiresAt,
+      // });
+    } catch (err: any) {
+      setCallJoinLoading(false);
+      logger.error('Join error', err);
+      Alert.alert('Error', err?.message ?? 'Failed to join. Check your network and try again.');
+    }
+  }
+  const makeCall = async (user: User) => {
+    try {
+      if (!me?.userName) {
+        Alert.alert('Profile not loaded', 'Your profile information is not available yet. Please try again in a moment.');
+        return;
+      }
+      const channelName = generateChannelName(
+        me.userName.toLowerCase(),
+        user.userName.toLowerCase()
+      );
+      const tokenData = await generateToken(channelName)
+      if (!tokenData) throw new Error("Token not generated");
+      console.log("CALLLL",tokenData);
+      
+      navigation.navigate('CallUI', {
+        channel: channelName,
+        // language,
+        calledUser:user,
+        channelTokenData: tokenData,
+        uid: me?.agoraId || Number(tokenData.uid),
+        // uid: Number(data.uid),
+        expiresAt: tokenData.expiresAt,
+      });
+    } catch (error) {
+
+    }
+  }
+  // Handle making a call to a favorite user
+  const handleMakeCall = useCallback(
+    (user: User) => {
+      if (!me?.userName) {
+        Alert.alert('Profile not loaded', 'Your profile information is not available yet. Please try again in a moment.');
+        return;
+      }
+      Alert.alert(
+        'Make A Call',
+        `Do you want to make a call with ${user.userName} ?`,
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel',
+          },
+          {
+            text: 'Call',
+            onPress: () => { makeCall(user) }
+          },
+        ]
+      );
+    },
+    [me, navigation]
+  );
+
+
   const renderItem = useCallback(({ item }: { item: User }) => (
-    <FavoriteItem user={item} onRemove={handleRemoveFavorite} />
+    <FavoriteItem user={item} onRemove={handleRemoveFavorite} onMakeCall={handleMakeCall} />
   ), [handleRemoveFavorite]);
 
   const keyExtractor = useCallback((item: User) => item.id, []);
@@ -156,14 +267,14 @@ const FavoritesList: React.FC<FavoritesListProps> = ({ onShowUserList }) => {
         }
         contentContainerStyle={favorites.length === 0 ? styles.emptyListContent : undefined}
       />
-         {onShowUserList && (
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={onShowUserList}
-          >
-            <Text style={styles.addButtonText}>Add Users</Text>
-          </TouchableOpacity>
-        )}
+      {onShowUserList && (
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={onShowUserList}
+        >
+          <Text style={styles.addButtonText}>Add Users</Text>
+        </TouchableOpacity>
+      )}
 
     </View>
   );
@@ -173,9 +284,10 @@ const FavoritesList: React.FC<FavoritesListProps> = ({ onShowUserList }) => {
 interface FavoriteItemProps {
   user: User;
   onRemove: (user: User) => void;
+  onMakeCall: (user: User) => void;
 }
 
-const FavoriteItem: React.FC<FavoriteItemProps> = React.memo(({ user, onRemove }) => (
+const FavoriteItem: React.FC<FavoriteItemProps> = React.memo(({ user, onRemove, onMakeCall }) => (
 
   <View style={styles.favoriteItem}>
     <View style={styles.userInfo}>
@@ -197,7 +309,7 @@ const FavoriteItem: React.FC<FavoriteItemProps> = React.memo(({ user, onRemove }
     </View>
     <TouchableOpacity
       style={styles.callButton}
-      // onPress={() => onRemove(user)}
+      onPress={() => onMakeCall(user)}
     >
       <Text style={styles.callButtonText}>CAll</Text>
     </TouchableOpacity>
@@ -344,8 +456,8 @@ const styles = StyleSheet.create({
     color: '#999',
     fontStyle: 'italic',
   },
-  callButton:{
-    margin:10,
+  callButton: {
+    margin: 10,
     paddingHorizontal: moderateScale(12),
     paddingVertical: moderateVerticalScale(6),
     backgroundColor: '#ebffee',
@@ -373,7 +485,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   addButton: {
-    marginHorizontal:130,
+    marginHorizontal: 130,
     paddingHorizontal: 12,
     paddingVertical: 16,
     backgroundColor: '#4CAF50',
@@ -393,7 +505,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: moderateVerticalScale(10)
-},
+  },
 });
 
 export default FavoritesList;

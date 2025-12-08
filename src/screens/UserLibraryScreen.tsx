@@ -39,8 +39,6 @@ function UserLibraryScreen({ navigation }: Props) {
     const dropdownButtonRef = useRef<View>(null);
     const [showUserList, setShowUserList] = useState<boolean>(false);
 
-    // const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0, width: 0 });
-    // const { isLoading, error, isAuthenticated } =
     const userProfile = useAppSelector((state) => state.userProfile);
     console.log(userProfile, "userProfile");
 
@@ -71,18 +69,6 @@ function UserLibraryScreen({ navigation }: Props) {
                 useNativeDriver: true,
             }).start();
         }
-    };
-
-    const handleProfilePress = () => {
-        toggleDropdown();
-        // Navigate to profile screen
-        // navigation.navigate('Profile');
-    };
-
-    const handleSettingsPress = () => {
-        toggleDropdown();
-        // Navigate to settings/update details screen
-        // navigation.navigate('UpdateProfile');
     };
 
     const handleLogoutPress = async () => {
@@ -126,16 +112,10 @@ function UserLibraryScreen({ navigation }: Props) {
             toggleDropdown();
         }
     };
+    // const me = useAppSelector((state) => state.userProfile.profile);
+    const accessToken = useAppSelector((state => state.auth.tokens?.accessToken));
+    console.log(accessToken,"accessToken");
 
-    useEffect(() => {
-        console.log("RE useEffecr");
-
-        dispatch(getMe());
-
-        return () => {
-
-        }
-    }, [dispatch])
 
     // Refetch favorites when returning from UsersList
     useEffect(() => {
@@ -196,22 +176,6 @@ function UserLibraryScreen({ navigation }: Props) {
 
                     </View>
 
-
-
-                    {/* <UsersList /> */}
-                    {/* <FavoritesList/> */}
-                    {/* {showUserList ? (
-                        <UsersList onUserAdded={() => setShowUserList(false)} />
-                    ) : (
-                        <>
-                            <FavoritesList />
-                            <Pressable
-                                style={({ pressed }) => [style.addTagButton, { backgroundColor: pressed ? pressedPrimaryButtonBackground : primaryButtonBackground }]}
-                                onPress={() => setShowUserList(true)}>
-                                <AddIcon width={moderateScale(15)} height={moderateVerticalScale(15)} />
-                            </Pressable>
-                        </>
-                    )} */}
                     {showUserList ? (
                         <UsersList onUserAdded={() => setShowUserList(false)} onBack={() => setShowUserList(false)} />
                     ) : (
@@ -247,27 +211,6 @@ function UserLibraryScreen({ navigation }: Props) {
                                 ]}
                             >
                                 <View style={style.dropdownMenu}>
-                                    {/* Profile Option */}
-                                    {/* <Pressable
-                                        style={({ pressed }) => [
-                                            style.dropdownItem,
-                                            pressed && style.dropdownItemPressed
-                                        ]}
-                                        onPress={handleProfilePress}
-                                    >
-                                        <Text style={style.dropdownText}>👤 Profile</Text>
-                                    </Pressable> */}
-
-                                    {/* Update Details Option */}
-                                    {/* <Pressable
-                                        style={({ pressed }) => [
-                                            style.dropdownItem,
-                                            pressed && style.dropdownItemPressed
-                                        ]}
-                                        onPress={handleSettingsPress}
-                                    >
-                                        <Text style={style.dropdownText}>⚙️ Update Details</Text>
-                                    </Pressable> */}
 
                                     {/* Divider */}
                                     {/* <View style={style.dropdownDivider} /> */}

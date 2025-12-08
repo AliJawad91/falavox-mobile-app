@@ -1,5 +1,5 @@
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, PermissionsAndroid, Platform, Pressable, StyleSheet, Text, TouchableOpacity, View, Modal } from "react-native";
 import LinearGradient from "react-native-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { moderateScale, moderateVerticalScale } from "react-native-size-matters";
@@ -10,18 +10,436 @@ import BackIcon from "../../assets/icons/ic_back_plain.svg";
 // @ts-ignore: Module declaration for SVGs is missing in the project types
 import MuteIcon from "../../assets/icons/ic_mic_off.svg";
 // @ts-ignore: Module declaration for SVGs is missing in the project types
+import MuteOnIcon from "../../assets/icons/ic_mic_none_24px.svg"
+// @ts-ignore: Module declaration for SVGs is missing in the project types
 import SpeakerIcon from "../../assets/icons/ic_speaker.svg";
 // @ts-ignore: Module declaration for SVGs is missing in the project types
+import SpeakerOffIcon from "../../assets/icons/speaker-off-3.svg"
+// @ts-ignore: Module declaration for SVGs is missing in the project types
 import PhoneIcon from "../../assets/icons/ic_phone.svg";
+import { useEffect, useRef, useState } from "react";
+import { APP_CONFIG, fetchWithTimeout, withBase } from "../config";
+import createAgoraRtcEngine, { AudioProfileType, AudioScenarioType, ChannelProfileType, ClientRoleType, IRtcEngine } from "react-native-agora";
+import { logger } from "../utils/logger";
+import { io } from "socket.io-client";
+import { ChannelTokenDataInterface, TranslationStartedPayload } from "../types";
+
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CallUI'>;
 
-function CallScreenUI({ navigation }: Props) {
+function CallScreenUI({ route, navigation }: Props) {
+    const { channel, calledUser, channelTokenData, uid, expiresAt } = route.params;
+
+    const engineRef = useRef<IRtcEngine | null>(null);
+
+    const [tokenExpiry, setTokenExpiry] = useState<number | null>(expiresAt || null);
+    const [remoteUsers, setRemoteUsers] = useState<number[]>([]);
+    const [isMuted, setIsMuted] = useState(false);
+    const [isSpeakerEnabled, setIsSpeakerEnabled] = useState(true);
+    const [isTranslationEnabled, setIsTranslationEnabled] = useState(false);
+    const [translationSession, setTranslationSession] = useState<any>(null);
+    const [showLanguageModal, setShowLanguageModal] = useState(false);
+    const [speakingLanguage, setSpeakingLanguage] = useState('en');
+    const [listeningLanguage, setListeningLanguage] = useState('ur');
+    const [originalSpeakerUid, setOriginalSpeakerUid] = useState<number | null>(null);
+    const [activeTranslationUid, setActiveTranslationUid] = useState<number | null>(null);
 
     const handleBackPress = () => {
         navigation.goBack();
     };
+    const socket = useRef<any>(null);
+    // console.log(tokenExpiry, channel, "tokenExpiry, channel out useEffect");
 
+    useEffect(() => {
+        console.log(tokenExpiry, channel, "tokenExpiry, channel inside useEffect");
+
+        if (!tokenExpiry) return;
+        const msUntilRenew = tokenExpiry * 1000 - Date.now() - 30 * 1000; // renew 30s before expiry
+        if (msUntilRenew <= 0) return;
+
+        const id = setTimeout(async () => {
+            try {
+                const url = withBase(`${APP_CONFIG.TOKEN_ENDPOINT}?channel=${encodeURIComponent(channel)}?uid=${uid}`);
+                const res = await fetchWithTimeout(url, { headers: { 'ngrok-skip-browser-warning': 'true' } });
+                const j = (await res.json()) as { token?: string; expiresAt?: number; data?: { token: string; expiresAt?: number } };
+                const token = j.token ?? j.data?.token;
+                const newExpiry = j.expiresAt ?? j.data?.expiresAt;
+                if (token) {
+                    engineRef.current?.renewToken(token);
+                    console.log("Agora token renewed");
+
+                    logger.info('Agora token renewed');
+                }
+                if (newExpiry) setTokenExpiry(newExpiry);
+            } catch (err) {
+                console.log("failed to refresh token");
+
+                logger.warn('failed to refresh token', err);
+            }
+        }, msUntilRenew);
+        return () => clearTimeout(id);
+    }, [tokenExpiry, channel]);
+
+    useEffect(() => {
+        socket.current = io(APP_CONFIG.SERVER_HOST, { transports: ['websocket'] });
+
+        const onConnect = () => {
+            logger.info('Socket connected');
+            socket.current.emit('join_channel', { channel: channel, uid: uid });
+        };
+        socket.current.on('connect', onConnect);
+
+        const onTranslationStarted = async (payload: TranslationStartedPayload) => {
+            const palabraTask = payload?.palabraTask?.data;
+            if (!palabraTask) return;
+
+            const remoteUid = palabraTask.remote_uid as number;
+            const translatorUid = (palabraTask.translations?.[0]?.local_uid ?? palabraTask.local_uid) as number;
+            logger.info('translation_started', { remoteUid, translatorUid });
+
+            // Store session for later stop handling
+            setTranslationSession(payload as any);
+            setOriginalSpeakerUid(remoteUid);
+            setActiveTranslationUid(translatorUid);
+            // await applyTranslationMuteLogic(engineRef.current, uid, remoteUid, translatorUid);
+            applyTranslationMuteLogic(
+                engineRef.current,
+                uid,
+                remoteUid,
+                translatorUid,
+                // isTranslationEnabled
+            );
+            // (only for listener)
+            // if (uid !== remoteUid) {
+            //     applyListenerAudioLogic(
+            //         engineRef.current!,
+            //         remoteUid,
+            //         true // translation ON
+            //     );
+            // }
+        };
+        socket.current.on('translation_started', onTranslationStarted);
+
+        const onTranslationStopped = async (payload?: any) => {
+            logger.info('Translation stopped, restoring original');
+
+            // Prefer payload-provided IDs if available
+            const stoppedRemote = Number(payload?.palabraTask?.data?.remote_uid ?? payload?.remote_uid ?? originalSpeakerUid);
+            const stoppedTranslator = Number(payload?.palabraTask?.data?.local_uid ?? payload?.translator_uid ?? activeTranslationUid);
+            console.log("uid", uid, typeof uid, "stoppedRemote", stoppedRemote, typeof stoppedRemote, "stoppedTranslator", stoppedTranslator, typeof stoppedTranslator, "originalSpeakerUid", originalSpeakerUid, typeof originalSpeakerUid);
+            // uid 6 number stoppedRemote 6 string stoppedTranslator 88414 string
+            // uid 9 number stoppedRemote 6 number stoppedTranslator 75102 number originalSpeakerUid 6 string
+
+            // Check if this event belongs to THIS user's translation session
+            if (stoppedRemote !== uid) {
+                console.log("Ignoring stop from another user's session");
+                return;
+            }
+            if (uid !== stoppedRemote) {
+                if (stoppedRemote) await engineRef.current?.muteRemoteAudioStream(stoppedRemote, false);
+            }
+            if (stoppedTranslator) {
+                await engineRef.current?.muteRemoteAudioStream(stoppedTranslator, true);
+            }
+
+            setIsTranslationEnabled(false);
+            setTranslationSession(null);
+            setActiveTranslationUid(null);
+            setOriginalSpeakerUid(null);
+
+            // applyListenerAudioLogic(
+            //     engineRef.current!,
+            //     stoppedRemote,
+            //     false // translation OFF
+            // );
+
+        };
+        socket.current.on('translation_stopped', onTranslationStopped);
+
+        // Broadcast variant sent to other users in the channel by the backend
+        const onTranslationSessionStopped = async (payload?: any) => {
+            logger.info('Translation session stopped (broadcast), restoring original');
+
+            const stoppedRemote = Number(payload?.palabraTask?.data?.remote_uid ?? payload?.remote_uid ?? originalSpeakerUid);
+            const stoppedTranslator = Number(payload?.palabraTask?.data?.local_uid ?? payload?.translator_uid ?? activeTranslationUid);
+
+            if (uid !== stoppedRemote) {
+                if (stoppedRemote) await engineRef.current?.muteRemoteAudioStream(stoppedRemote, false);
+            }
+            if (stoppedTranslator) {
+                await engineRef.current?.muteRemoteAudioStream(stoppedTranslator, true);
+            }
+
+            setIsTranslationEnabled(false);
+            setTranslationSession(null);
+            setActiveTranslationUid(null);
+            setOriginalSpeakerUid(null);
+
+            // applyListenerAudioLogic(
+            //     engineRef.current!,
+            //     stoppedRemote,
+            //     false // translation OFF
+            // );
+
+        };
+        socket.current.on('translation_session_stopped', onTranslationSessionStopped);
+
+        return () => {
+            socket.current?.off('connect', onConnect);
+            socket.current?.off('translation_started', onTranslationStarted);
+            socket.current?.off('translation_stopped', onTranslationStopped);
+            socket.current?.off('translation_session_stopped', onTranslationSessionStopped);
+            socket.current?.disconnect();
+        };
+    }, [channel, uid, originalSpeakerUid, activeTranslationUid]);
+
+    useEffect(() => {
+        const token = (channelTokenData as ChannelTokenDataInterface)?.token;
+        if (!channel || !token) return;
+
+        const start = async () => {
+            try {
+                await ensurePermissions();
+                const engine = createAgoraRtcEngine();
+                engineRef.current = engine;
+
+                engine.initialize({
+                    appId: APP_CONFIG.AGORA_APP_ID,
+                });
+
+                engine.setChannelProfile(ChannelProfileType.ChannelProfileCommunication);
+                engine.setClientRole(ClientRoleType.ClientRoleBroadcaster);
+
+                engine.registerEventHandler({
+                    onUserJoined: async (_connection, remoteUid) => {
+                        logger.info('Remote user joined', { remoteUid, activeTranslationUid, uid, originalSpeakerUid });
+                        setRemoteUsers(prev => (prev.includes(remoteUid) ? prev : [...prev, remoteUid]));
+                        if (originalSpeakerUid && activeTranslationUid) {
+                            setTimeout(() => {
+                                applyTranslationMuteLogic(engineRef.current, uid, originalSpeakerUid, activeTranslationUid);
+                            }, 700);
+                        } else {
+                            logger.debug('IDs not ready yet, skipping mute logic');
+                        }
+                    },
+                    onUserOffline: (_connection, uidGone) => {
+                        logger.info('Remote user left', { uid: uidGone });
+                        setRemoteUsers((prev) => prev.filter((id) => id !== uidGone));
+                    },
+                    onRemoteAudioStateChanged: (_connection, uidChanged, state, reason, elapsed) => {
+                        logger.debug('Remote audio state', { uid: uidChanged, state, reason, elapsed });
+                    },
+                    onUserMuteAudio: (_connection, uidChanged, muted) => {
+                        logger.debug('Remote mute', { uid: uidChanged, muted });
+                    },
+                    onJoinChannelSuccess: (_connection, myUid) => {
+                        logger.info('Joined audio channel', { uid: myUid });
+                    },
+                });
+
+                engine.enableAudio();
+                engine.setAudioProfile(
+                    AudioProfileType.AudioProfileDefault,
+                    AudioScenarioType.AudioScenarioGameStreaming
+                );
+
+                engine.joinChannel(token, String(channel), Number(uid), {
+                    clientRoleType: ClientRoleType.ClientRoleBroadcaster,
+                });
+
+                if (expiresAt) {
+                    setTokenExpiry(expiresAt);
+                }
+            } catch (e: any) {
+                Alert.alert('Agora error', e?.message ?? String(e));
+            }
+        };
+        start();
+        return () => {
+            const engine = engineRef.current;
+            if (engine) {
+                engine.leaveChannel();
+                engine.release();
+                engineRef.current = null;
+            }
+        };
+    }, [channel, channelTokenData, uid, expiresAt]);
+
+    const toggleMute = () => {
+        logger.debug('Toggle Mute');
+        console.log("Toggle Mutee", isMuted);
+
+        const engine = engineRef.current;
+        if (engine) {
+            engine.muteLocalAudioStream(!isMuted);
+            setIsMuted(!isMuted);
+        }
+    };
+
+    const toggleSpeaker = () => {
+        const engine = engineRef.current;
+        if (engine) {
+            engine.setEnableSpeakerphone(!isSpeakerEnabled);
+            setIsSpeakerEnabled(!isSpeakerEnabled);
+        }
+    };
+
+    const toggleTranslation = () => {
+        logger.debug('Translation toggle pressed', { isTranslationEnabled });
+
+        if (!isTranslationEnabled) {
+            // Show language selection modal when enabling translation
+            setShowLanguageModal(true);
+        } else {
+            // Stop translation - send to backend and reset state
+            logger.debug('Stopping translation');
+            socket.current?.emit('stop_translation', {
+                channel: channel,
+                clientId: uid,
+            });
+
+            // Reset local state immediately for responsive UI
+            setIsTranslationEnabled(false);
+            setTranslationSession(null);
+
+            // applyListenerAudioLogic(engineRef.current!, originalSpeakerUid!, false);
+
+        }
+    };
+
+
+    const handleLanguageSelection = () => {
+        setShowLanguageModal(false);
+        setIsTranslationEnabled(true);
+
+        // Emit start translation with selected languages
+        logger.debug('channelTokenData', channelTokenData);
+        // channel,expiresAt, generatedAt, token, uid
+        socket.current?.emit('start_translation', {
+            channel: channel,
+            sourceLanguage: speakingLanguage,
+            targetLanguage: listeningLanguage,
+            // channelTokenData: channelTokenData,
+            channelTokenData: {
+                token: channelTokenData?.token ?? '',
+                uid: channelTokenData?.uid ?? uid,
+                expiresAt: channelTokenData?.expiresAt ?? expiresAt ?? 0,
+                generatedAt: channelTokenData?.generatedAt ?? Math.floor(Date.now() / 1000),
+                channel: channelTokenData?.channel ?? channel,
+            },
+            clientId: uid,
+        });
+    }
+    // async function applyTranslationMuteLogic(
+    //     engine: IRtcEngine | null,
+    //     myUid: number,
+    //     speakerUid: number,
+    //     translatorUid: number
+    // ) {
+    //     // applyTranslationMuteLogic(engineRef.current, uid, originalSpeakerUid, activeTranslationUid);
+    //     console.log('applyTranslationMuteLogic', { myUid, speakerUid, translatorUid });
+
+    //     logger.debug('applyTranslationMuteLogic', { myUid, speakerUid, translatorUid });
+    //     if (!engine || !speakerUid || !translatorUid || !myUid) {
+    //         logger.debug('IDs not ready yet, skipping mute logic');
+    //         return;
+    //     }
+
+    //     logger.info('Applying translation logic', { myUid, speakerUid, translatorUid });
+
+    //     // SPEAKER SIDE
+    //     if (myUid == speakerUid) {
+    //         console.log("🎙 Speaker detected — muting translator stream");
+    //         await engine.muteRemoteAudioStream(translatorUid, true);
+    //         await engine.muteLocalAudioStream(false);
+    //     }
+    //     // LISTENER SIDE
+    //     else {
+    //         console.log("🎧 Listener detected — muting speaker, enabling translator");
+    //         await engine.muteRemoteAudioStream(speakerUid, true);
+    //         await engine.muteRemoteAudioStream(translatorUid, false);
+    //     }
+    // }
+
+    // second
+    async function applyTranslationMuteLogic(
+        engine: IRtcEngine | null,
+        myUid: number,
+        speakerUid: number,
+        translatorUid: number
+    ) {
+        if (!engine) return;
+
+        logger.info('Applying translation logic', { myUid, speakerUid, translatorUid });
+        speakerUid = Number(speakerUid);
+        translatorUid = Number(translatorUid);
+
+        if (myUid == speakerUid) {
+            console.log("🎙 Speaker detected — muting translation audio");
+
+            // Mute translator mixed signal
+            engine.adjustPlaybackSignalVolume(0);
+
+            // Keep my mic ON
+            engine.muteLocalAudioStream(false);
+
+        } else {
+            console.log("🎧 Listener detected — muting speaker, enabling translation");
+
+            // Mute original speaker
+            engine.muteRemoteAudioStream(speakerUid, true);
+
+            // Enable translator mixed audio
+            engine.adjustPlaybackSignalVolume(100);
+        }
+    }
+    // async function applyListenerAudioLogic(
+    //     engine: IRtcEngine,
+    //     speakerUid: number,
+    //     translatorEnabled: boolean
+    // ) {
+    //     if (!engine) return;
+
+    //     if (translatorEnabled) {
+    //         console.log("🎧 Listener — Speaker translation ON → play translated only");
+
+    //         // Mute original speaker audio
+    //         await engine.muteRemoteAudioStream(speakerUid, true);
+
+    //         // Enable translated audio
+    //         engine.adjustPlaybackSignalVolume(100);
+
+    //     } else {
+    //         console.log("🎧 Listener — Speaker translation OFF → play original only");
+
+    //         // Unmute original speaker audio
+    //         await engine.muteRemoteAudioStream(speakerUid, false);
+
+    //         // Mute translation
+    //         engine.adjustPlaybackSignalVolume(0);
+    //     }
+    // }
+
+    const onLeave = () => {
+        logger.debug('Stopping translation');
+        socket.current?.emit('stop_translation', {
+            channel: channel,
+            clientId: uid,
+        });
+
+        // Reset local state immediately for responsive UI
+        setIsTranslationEnabled(false);
+        setTranslationSession(null);
+        const engine = engineRef.current;
+        if (engine) {
+            engine.leaveChannel();
+            engine.release();
+            engineRef.current = null;
+        }
+        // Navigate back to JoinScreen
+        // navigation.navigate('Join');
+        navigation.goBack();
+    }
     return (
         <LinearGradient
             style={style.gradientContainerStyle}
@@ -52,39 +470,81 @@ function CallScreenUI({ navigation }: Props) {
 
                         <Text style={style.callTimeTextStyle}>1:58</Text>
 
-                        <Text style={style.callNameTextStyle}>John Doe</Text>
+                        <Text style={style.callNameTextStyle}>{calledUser?.lastName} {calledUser?.firstName}</Text>
 
-                        <Text style={style.callHashTagTextStyle}>#JohnDoe</Text>
+                        <Text style={style.callHashTagTextStyle}>@{calledUser?.userName}</Text>
 
                         <View style={style.callControlContainerStyle}>
 
                             <Pressable
                                 style={({ pressed }) => [style.callControlButtonStyle, { backgroundColor: pressed ? pressedIconButtonBackground : 'transparent' }]}
-                                onPress={null}>
-
-                                <MuteIcon
-                                    style={{ color: icon }}
-                                    width={moderateScale(25)}
-                                    height={moderateVerticalScale(25)} />
-
+                                onPress={toggleMute}>
+                                {isMuted ?
+                                    <MuteIcon
+                                        style={{ color: icon }}
+                                        width={moderateScale(25)}
+                                        height={moderateVerticalScale(25)} />
+                                    :
+                                    <MuteOnIcon
+                                        // style={{ color: icon }}
+                                        // style={{ color: 'white' }}
+                                        fill="white"
+                                        width={moderateScale(25)}
+                                        height={moderateVerticalScale(25)} />
+                                }
                             </Pressable>
 
                             <Pressable
                                 style={({ pressed }) => [style.callControlButtonStyle, { backgroundColor: pressed ? pressedIconButtonBackground : 'transparent' }]}
-                                onPress={null}>
-
-                                <SpeakerIcon
-                                    style={{ color: icon }}
-                                    width={moderateScale(25)}
-                                    height={moderateVerticalScale(25)} />
-
+                                onPress={toggleSpeaker}>
+                                {isSpeakerEnabled ?
+                                    <SpeakerIcon
+                                        style={{ color: icon }}
+                                        width={moderateScale(25)}
+                                        height={moderateVerticalScale(25)} />
+                                    :
+                                    <SpeakerOffIcon
+                                        fill="white"
+                                        width={moderateScale(25)}
+                                        height={moderateVerticalScale(25)} />
+                                }
                             </Pressable>
 
                         </View>
+                        <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+
+                            {isTranslationEnabled && (
+                                <View style={style.translationStatusIndicator}>
+                                    <Text style={style.translationStatusText}>
+                                        {speakingLanguage.toUpperCase()} → {listeningLanguage.toUpperCase()}
+                                    </Text>
+                                </View>
+                            )}
+                            <Pressable
+                                style={({ pressed }) => [
+                                    style.callTranslationButtonStyle,
+                                    isTranslationEnabled && style.callTranslationButtonActiveStyle,
+                                    pressed && {
+                                        backgroundColor: isTranslationEnabled ? '#45A049' : '#f0f0f0',
+                                        transform: [{ scale: 0.95 }],
+                                    }
+                                ]}
+                                onPress={toggleTranslation}
+                            >
+
+                                <Text style={[
+                                    style.callTranslationButtonTextStyle,
+                                    isTranslationEnabled && style.callTranslationButtonTextActiveStyle
+                                ]}>
+                                    {isTranslationEnabled ? 'Stop Translation' : 'Start Translation'}
+                                </Text>
+                            </Pressable>
+                        </View>
+
 
                         <Pressable
                             style={({ pressed }) => [style.callEndButtonStyle, { backgroundColor: pressed ? pressedPrimaryButtonBackground : primaryButtonBackground }]}
-                            onPress={null}>
+                            onPress={onLeave}>
 
                             <PhoneIcon
                                 style={{ color: icon }}
@@ -96,11 +556,113 @@ function CallScreenUI({ navigation }: Props) {
                     </View>
 
                 </View>
+                {/* Language Selection Modal */}
+                <Modal
+                    visible={showLanguageModal}
+                    transparent={true}
+                    animationType="slide"
+                    onRequestClose={() => setShowLanguageModal(false)}
+                >
+                    <View style={style.modalOverlay}>
+                        <View style={style.modalContent}>
+                            <Text style={style.modalTitle}>Select Languages</Text>
 
+                            {/* Speaking Language Selection */}
+                            <View style={style.languageSection}>
+                                <Text style={style.languageLabel}>I will speak in:</Text>
+                                <View style={style.languageButtons}>
+                                    {[
+                                        { code: 'en', name: 'English' },
+                                        { code: 'es', name: 'Spanish' },
+                                        { code: 'fr', name: 'French' },
+                                        { code: 'ur', name: 'Urdu' },
+                                        { code: 'ar', name: 'Arabic' },
+                                        { code: 'hi', name: 'Hindi' }
+                                    ].map((lang) => (
+                                        <TouchableOpacity
+                                            key={lang.code}
+                                            style={[
+                                                style.languageButton,
+                                                speakingLanguage === lang.code && style.selectedLanguageButton
+                                            ]}
+                                            onPress={() => setSpeakingLanguage(lang.code)}
+                                        >
+                                            <Text style={[
+                                                style.languageButtonText,
+                                                speakingLanguage === lang.code && style.selectedLanguageButtonText
+                                            ]}>
+                                                {lang.name}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
+                            </View>
+
+                            {/* Listening Language Selection */}
+                            <View style={style.languageSection}>
+                                <Text style={style.languageLabel}>I want to hear in:</Text>
+                                <View style={style.languageButtons}>
+                                    {[
+                                        { code: 'en', name: 'English' },
+                                        { code: 'es', name: 'Spanish' },
+                                        { code: 'fr', name: 'French' },
+                                        { code: 'ur', name: 'Urdu' },
+                                        { code: 'ar', name: 'Arabic' },
+                                        { code: 'hi', name: 'Hindi' }
+                                    ].map((lang) => (
+                                        <TouchableOpacity
+                                            key={lang.code}
+                                            style={[
+                                                style.languageButton,
+                                                listeningLanguage === lang.code && style.selectedLanguageButton
+                                            ]}
+                                            onPress={() => setListeningLanguage(lang.code)}
+                                        >
+                                            <Text style={[
+                                                style.languageButtonText,
+                                                listeningLanguage === lang.code && style.selectedLanguageButtonText
+                                            ]}>
+                                                {lang.name}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
+                            </View>
+
+                            {/* Action Buttons */}
+                            <View style={style.modalActions}>
+                                <TouchableOpacity
+                                    style={style.cancelButton}
+                                    onPress={() => setShowLanguageModal(false)}
+                                >
+                                    <Text style={style.cancelButtonText}>Cancel</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={style.confirmButton}
+                                    onPress={handleLanguageSelection}
+                                >
+                                    <Text style={style.confirmButtonText}>Start Translation</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </View>
+                </Modal>
             </SafeAreaView>
 
         </LinearGradient>
     );
+}
+
+// ✅ AUDIO-ONLY PERMISSIONS
+async function ensurePermissions() {
+    if (Platform.OS === 'android') {
+        const results = await PermissionsAndroid.requestMultiple([
+            PermissionsAndroid.PERMISSIONS.RECORD_AUDIO, // Only audio permission needed
+        ]);
+        const granted = Object.values(results).every((r) => r === PermissionsAndroid.RESULTS.GRANTED);
+        if (!granted) throw new Error('Microphone permission denied');
+    }
+    // iOS: Add NSMicrophoneUsageDescription to info.plist
 }
 
 const style = StyleSheet.create({
@@ -162,7 +724,65 @@ const style = StyleSheet.create({
     },
     callControlContainerStyle: {
         flexDirection: 'row',
-        marginTop: moderateVerticalScale(50)
+        marginTop: moderateVerticalScale(40)
+    },
+    callTranslationContainerStyle: {
+        marginTop: moderateVerticalScale(25),
+        width: moderateScale(110),
+        height: moderateVerticalScale(35),
+        borderRadius: moderateScale(30),
+        // backgroundColor: 'white',
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
+    callTranslationButtonStyle: {
+        marginTop: moderateVerticalScale(45),
+        backgroundColor: 'white',
+        width: moderateScale(160),
+        height: moderateVerticalScale(45),
+        borderRadius: moderateScale(25),
+        borderColor: buttonBorderColor,
+        borderWidth: 2,
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    callTranslationButtonActiveStyle: {
+        backgroundColor: '#4CAF50',
+        borderColor: '#45A049',
+        borderWidth: 2,
+    },
+    callTranslationButtonPressedStyle: {
+        // backgroundColor: isTranslationEnabled ? '#45A049' : '#f0f0f0',
+        transform: [{ scale: 0.95 }],
+    },
+    callTranslationButtonTextStyle: {
+        fontFamily: Platform.select({ ios: 'Inter 18pt', android: 'Inter_SemiBold' }),
+        fontWeight: Platform.select({ ios: '600' }),
+        fontSize: moderateScale(14),
+        color: '#333',
+        letterSpacing: 0.5,
+    },
+    callTranslationButtonTextActiveStyle: {
+        color: 'white',
+        fontWeight: Platform.select({ ios: '700' }),
+    },
+    translationStatusIndicator: {
+        position: 'absolute',
+        bottom: 50,
+        backgroundColor: '#4CAF50',
+        paddingHorizontal: moderateScale(12),
+        paddingVertical: moderateVerticalScale(4),
+        borderRadius: moderateScale(15),
+    },
+    translationStatusText: {
+        fontSize: moderateScale(11),
+        color: 'white',
+        fontWeight: '600',
     },
     callControlButtonStyle: {
         width: moderateScale(55),
@@ -183,8 +803,93 @@ const style = StyleSheet.create({
         aspectRatio: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        marginTop: moderateVerticalScale(120)
-    }
+        marginTop: moderateVerticalScale(80)
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContent: {
+        backgroundColor: '#2a2a2a',
+        borderRadius: 20,
+        padding: 24,
+        width: '90%',
+        maxHeight: '80%',
+    },
+    modalTitle: {
+        color: 'white',
+        fontSize: 24,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        marginBottom: 24,
+    },
+    languageSection: {
+        marginBottom: 24,
+    },
+    languageLabel: {
+        color: '#BDBDBD',
+        fontSize: 16,
+        marginBottom: 12,
+        fontWeight: '500',
+    },
+    languageButtons: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
+    },
+    languageButton: {
+        backgroundColor: '#404040',
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 20,
+        marginRight: 8,
+        marginBottom: 8,
+    },
+    selectedLanguageButton: {
+        backgroundColor: '#4CAF50',
+    },
+    languageButtonText: {
+        color: '#BDBDBD',
+        fontSize: 14,
+        fontWeight: '500',
+    },
+    selectedLanguageButtonText: {
+        color: 'white',
+        fontWeight: 'bold',
+    },
+    modalActions: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 16,
+    },
+    cancelButton: {
+        backgroundColor: '#666',
+        paddingHorizontal: 24,
+        paddingVertical: 12,
+        borderRadius: 25,
+        flex: 0.45,
+        alignItems: 'center',
+    },
+    cancelButtonText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: '500',
+    },
+    confirmButton: {
+        backgroundColor: '#4CAF50',
+        paddingHorizontal: 24,
+        paddingVertical: 12,
+        borderRadius: 25,
+        flex: 0.45,
+        alignItems: 'center',
+    },
+    confirmButtonText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
 });
 
 export default CallScreenUI;
