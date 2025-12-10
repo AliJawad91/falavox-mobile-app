@@ -29,7 +29,8 @@ type Props = NativeStackScreenProps<RootStackParamList, 'CallUI'>;
 
 function CallScreenUI({ route, navigation }: Props) {
     const { channel, calledUser, channelTokenData, uid, expiresAt } = route.params;
-
+    console.log(channel, calledUser, channelTokenData, uid, expiresAt,"channel, calledUser, channelTokenData, uid, expiresAt");
+    
     const engineRef = useRef<IRtcEngine | null>(null);
 
     const [tokenExpiry, setTokenExpiry] = useState<number | null>(expiresAt || null);
@@ -122,7 +123,8 @@ function CallScreenUI({ route, navigation }: Props) {
 
         const onTranslationStopped = async (payload?: any) => {
             logger.info('Translation stopped, restoring original');
-
+            console.log(payload,"translation_stopped payload");
+            
             // Prefer payload-provided IDs if available
             const stoppedRemote = Number(payload?.palabraTask?.data?.remote_uid ?? payload?.remote_uid ?? originalSpeakerUid);
             const stoppedTranslator = Number(payload?.palabraTask?.data?.local_uid ?? payload?.translator_uid ?? activeTranslationUid);
@@ -313,7 +315,9 @@ function CallScreenUI({ route, navigation }: Props) {
         setIsTranslationEnabled(true);
 
         // Emit start translation with selected languages
-        logger.debug('channelTokenData', channelTokenData);
+        logger.debug(uid,'+channelTokenData', channelTokenData);
+        console.log(uid,"++channelTokenData");
+        
         // channel,expiresAt, generatedAt, token, uid
         socket.current?.emit('start_translation', {
             channel: channel,
@@ -327,7 +331,7 @@ function CallScreenUI({ route, navigation }: Props) {
                 generatedAt: channelTokenData?.generatedAt ?? Math.floor(Date.now() / 1000),
                 channel: channelTokenData?.channel ?? channel,
             },
-            clientId: uid,
+            client_Agora_Id: uid,//this is agora uid of user who has started translation.
         });
     }
     // async function applyTranslationMuteLogic(
