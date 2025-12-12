@@ -40,7 +40,7 @@ function UserLibraryScreen({ navigation }: Props) {
     const [showUserList, setShowUserList] = useState<boolean>(false);
 
     const userProfile = useAppSelector((state) => state.userProfile);
-    console.log(userProfile, "userProfile");
+    // console.log(userProfile, "userProfile");
 
     const dispatch = useAppDispatch();
 
@@ -74,7 +74,7 @@ function UserLibraryScreen({ navigation }: Props) {
     const handleLogoutPress = async () => {
         toggleDropdown();
         // Handle logout logic here
-        console.log('Logout pressed');
+        // console.log('Logout pressed');
         // Clear all user-related state
         dispatch(logoutUser());
         dispatch(clearMe());
@@ -114,14 +114,14 @@ function UserLibraryScreen({ navigation }: Props) {
     };
     // const me = useAppSelector((state) => state.userProfile.profile);
     const accessToken = useAppSelector((state => state.auth.tokens?.accessToken));
-    console.log(accessToken,"accessToken");
+    // console.log(accessToken,"accessToken");
 
 
     // Refetch favorites when returning from UsersList
     useEffect(() => {
         if (!showUserList) {
             // When showUserList becomes false (i.e., we're showing FavoritesList), refetch favorites
-            console.log("Refetching favorites after returning from UsersList");
+            // console.log("Refetching favorites after returning from UsersList");
             dispatch(fetchFavorites({ page: 1, limit: 50 }));
         }
     }, [showUserList, dispatch]);
