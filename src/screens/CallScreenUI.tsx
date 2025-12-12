@@ -22,8 +22,7 @@ import { APP_CONFIG, fetchWithTimeout, withBase } from "../config";
 import createAgoraRtcEngine, { AudioProfileType, AudioScenarioType, ChannelProfileType, ClientRoleType, IRtcEngine } from "react-native-agora";
 import { logger } from "../utils/logger";
 import { io } from "socket.io-client";
-import { ChannelTokenDataInterface, TranslationStartedPayload, TranslationStartedPayloadAgain } from "../types";
-
+import { ChannelTokenDataInterface, TranslationStartedPayloadAgain } from "../types";
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CallUI'>;
 
@@ -36,7 +35,6 @@ function CallScreenUI({ route, navigation }: Props) {
     const [isMuted, setIsMuted] = useState(false);
     const [isSpeakerEnabled, setIsSpeakerEnabled] = useState(true);
     const [isTranslationEnabled, setIsTranslationEnabled] = useState(false);
-    const [translationSession, setTranslationSession] = useState<any>(null);
     const [showLanguageModal, setShowLanguageModal] = useState(false);
     const [speakingLanguage, setSpeakingLanguage] = useState('en');
     const [listeningLanguage, setListeningLanguage] = useState('ur');
@@ -96,10 +94,8 @@ function CallScreenUI({ route, navigation }: Props) {
             if (!payload.success) return;
 
             // Store session for later stop handling
-            setTranslationSession(payload as any);
             setOriginalSpeakerUid(speakerUid);
             setActiveTranslationUid(translatorUid);
-            // await applyTranslationMuteLogic(engineRef.current, uid, remoteUid, translatorUid);
             applyTranslationMuteLogic(
                 engineRef.current,
                 uid,
@@ -121,10 +117,10 @@ function CallScreenUI({ route, navigation }: Props) {
             //     "timestamp": "2025-12-10T12:47:46.883Z"
             // }
             // Prefer payload-provided IDs if available
-            const stoppedRemote = Number(payload?.palabraTask?.data?.remote_uid ?? payload?.remote_uid ?? originalSpeakerUid);
-            const stoppedTranslator = Number(payload?.palabraTask?.data?.local_uid ?? payload?.translator_uid ?? activeTranslationUid);
-            console.log("onTranslationStopped uid", uid, typeof uid, "stoppedRemote", stoppedRemote, typeof stoppedRemote, "stoppedTranslator", stoppedTranslator, typeof stoppedTranslator, "originalSpeakerUid", originalSpeakerUid, typeof originalSpeakerUid);
-            console.log(calledUser.userName, calledUser.agoraId,"calleduser Info stoping");
+            // const stoppedRemote = Number(payload?.palabraTask?.data?.remote_uid ?? payload?.remote_uid ?? originalSpeakerUid);
+            // const stoppedTranslator = Number(payload?.palabraTask?.data?.local_uid ?? payload?.translator_uid ?? activeTranslationUid);
+            // console.log("onTranslationStopped uid", uid, typeof uid, "stoppedRemote", stoppedRemote, typeof stoppedRemote, "stoppedTranslator", stoppedTranslator, typeof stoppedTranslator, "originalSpeakerUid", originalSpeakerUid, typeof originalSpeakerUid);
+            // console.log(calledUser.userName, calledUser.agoraId,"calleduser Info stoping");
             
             //onTranslationStopped uid 3 number stoppedRemote 3 number stoppedTranslator 31044 number originalSpeakerUid 3 string
             // Check if this event belongs to THIS user's translation session
@@ -135,9 +131,8 @@ function CallScreenUI({ route, navigation }: Props) {
 
             // if (uid !== stoppedRemote) {
                 // if (stoppedRemote) {
-                    const res = await engineRef.current?.muteRemoteAudioStream(calledUser.agoraId, false);
-                    console.log(res, "onTranslationStopped res");
-
+                    engineRef.current?.muteRemoteAudioStream(calledUser.agoraId, false);
+                    
                 // }
             // }
             // if (stoppedTranslator) {
@@ -145,7 +140,6 @@ function CallScreenUI({ route, navigation }: Props) {
             // }
 
             setIsTranslationEnabled(false);
-            setTranslationSession(null);
             setActiveTranslationUid(null);
             setOriginalSpeakerUid(null);
 
@@ -159,34 +153,33 @@ function CallScreenUI({ route, navigation }: Props) {
         socket.current.on('translation_stopped', onTranslationStopped);
 
         // Broadcast variant sent to other users in the channel by the backend
-        const onTranslationSessionStopped = async (payload?: any) => {
-            logger.info('Translation session stopped (broadcast), restoring original');
+        // const onTranslationSessionStopped = async (payload?: any) => {
+        //     logger.info('Translation session stopped (broadcast), restoring original');
 
-            const stoppedRemote = Number(payload?.palabraTask?.data?.remote_uid ?? payload?.remote_uid ?? originalSpeakerUid);
-            const stoppedTranslator = Number(payload?.palabraTask?.data?.local_uid ?? payload?.translator_uid ?? activeTranslationUid);
+        //     const stoppedRemote = Number(payload?.palabraTask?.data?.remote_uid ?? payload?.remote_uid ?? originalSpeakerUid);
+        //     const stoppedTranslator = Number(payload?.palabraTask?.data?.local_uid ?? payload?.translator_uid ?? activeTranslationUid);
 
-            if (uid !== stoppedRemote) {
-                if (stoppedRemote) await engineRef.current?.muteRemoteAudioStream(stoppedRemote, false);
-            }
-            if (stoppedTranslator) {
-                await engineRef.current?.muteRemoteAudioStream(stoppedTranslator, true);
-            }
+        //     if (uid !== stoppedRemote) {
+        //         if (stoppedRemote) await engineRef.current?.muteRemoteAudioStream(stoppedRemote, false);
+        //     }
+        //     if (stoppedTranslator) {
+        //         await engineRef.current?.muteRemoteAudioStream(stoppedTranslator, true);
+        //     }
 
-            setIsTranslationEnabled(false);
-            setTranslationSession(null);
-            setActiveTranslationUid(null);
-            setOriginalSpeakerUid(null);
-
+        //     setIsTranslationEnabled(false);
+        //     setActiveTranslationUid(null);
+        //     setOriginalSpeakerUid(null);
 
 
-        };
-        socket.current.on('translation_session_stopped', onTranslationSessionStopped);
+
+        // };
+        // socket.current.on('translation_session_stopped', onTranslationSessionStopped);
 
         return () => {
             socket.current?.off('connect', onConnect);
             socket.current?.off('translation_started', onTranslationStarted);
             socket.current?.off('translation_stopped', onTranslationStopped);
-            socket.current?.off('translation_session_stopped', onTranslationSessionStopped);
+            // socket.current?.off('translation_session_stopped', onTranslationSessionStopped);
             socket.current?.disconnect();
         };
     }, [channel, uid, originalSpeakerUid, activeTranslationUid]);
@@ -298,8 +291,6 @@ function CallScreenUI({ route, navigation }: Props) {
 
             // Reset local state immediately for responsive UI
             setIsTranslationEnabled(false);
-            setTranslationSession(null);
-
             // applyListenerAudioLogic(engineRef.current!, originalSpeakerUid!, false);
 
         }
@@ -372,7 +363,6 @@ function CallScreenUI({ route, navigation }: Props) {
 
         // Reset local state immediately for responsive UI
         setIsTranslationEnabled(false);
-        setTranslationSession(null);
         const engine = engineRef.current;
         if (engine) {
             engine.leaveChannel();
