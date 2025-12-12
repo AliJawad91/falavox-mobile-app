@@ -20,8 +20,16 @@ export interface TranslationStartedPayload {
     };
   };
 }
+export interface TranslationStartedPayloadAgain {
+  success: boolean,
+  taskId: string,
+  translatorUid: number,
+  sourceLanguage: string,
+  targetLanguage: string,
+  speakerUid: number,
+  message: string
 
-
+}
 // Base API response type
 export interface ApiResponse<T = any> {
   success: boolean;
