@@ -324,7 +324,6 @@ const FavoriteItem: React.FC<FavoriteItemProps> = React.memo(({ user, onRemove, 
 
 ));
 
-// Styles remain the same...
 const styles = StyleSheet.create({
   container: {
     flex: 1,

@@ -40,6 +40,11 @@ function CallScreenUI({ route, navigation }: Props) {
     const [listeningLanguage, setListeningLanguage] = useState('ur');
     const [originalSpeakerUid, setOriginalSpeakerUid] = useState<number | null>(null);
     const [activeTranslationUid, setActiveTranslationUid] = useState<number | null>(null);
+    const [callDuration, setCallDuration] = useState(0); // Duration in seconds
+    const [isCallActive, setIsCallActive] = useState(false); // Track if call is active for timer
+    const [isLeaving, setIsLeaving] = useState(false);
+    const leaveChannelPromise = useRef<{ resolve?: () => void }>({});
+    const callStartTime = useRef<number | null>(null);
 
     const handleBackPress = () => {
         navigation.goBack();
@@ -77,6 +82,22 @@ function CallScreenUI({ route, navigation }: Props) {
         return () => clearTimeout(id);
     }, [tokenExpiry, channel]);
 
+    // Call timer effect - runs continuously when call is active
+    useEffect(() => {
+        if (!isCallActive || !callStartTime.current) return;
+
+        const interval = setInterval(() => {
+            if (callStartTime.current) {
+                const elapsed = Math.floor((Date.now() - callStartTime.current) / 1000);
+                setCallDuration(elapsed);
+            } else {
+                setIsCallActive(false);
+            }
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [isCallActive]); // Depend on isCallActive state, not the ref
+
     useEffect(() => {
         socket.current = io(APP_CONFIG.SERVER_HOST, { transports: ['websocket'] });
 
@@ -109,7 +130,7 @@ function CallScreenUI({ route, navigation }: Props) {
 
         const onTranslationStopped = async (payload?: any) => {
             logger.info('Translation stopped, restoring original');
-            console.log(payload.clientId, "translation_stopped payload", uid,"uid", originalSpeakerUid, "originalSpeakerUid");
+            console.log(payload.clientId, "translation_stopped payload", uid, "uid", originalSpeakerUid, "originalSpeakerUid");
             // {
             //     "channel": "bashagain_muneeb",
             //     "clientId": 9,
@@ -121,7 +142,7 @@ function CallScreenUI({ route, navigation }: Props) {
             // const stoppedTranslator = Number(payload?.palabraTask?.data?.local_uid ?? payload?.translator_uid ?? activeTranslationUid);
             // console.log("onTranslationStopped uid", uid, typeof uid, "stoppedRemote", stoppedRemote, typeof stoppedRemote, "stoppedTranslator", stoppedTranslator, typeof stoppedTranslator, "originalSpeakerUid", originalSpeakerUid, typeof originalSpeakerUid);
             // console.log(calledUser.userName, calledUser.agoraId,"calleduser Info stoping");
-            
+
             //onTranslationStopped uid 3 number stoppedRemote 3 number stoppedTranslator 31044 number originalSpeakerUid 3 string
             // Check if this event belongs to THIS user's translation session
             // if (stoppedRemote !== uid) {
@@ -130,10 +151,10 @@ function CallScreenUI({ route, navigation }: Props) {
             // }
 
             // if (uid !== stoppedRemote) {
-                // if (stoppedRemote) {
-                    engineRef.current?.muteRemoteAudioStream(calledUser.agoraId, false);
-                    
-                // }
+            // if (stoppedRemote) {
+            engineRef.current?.muteRemoteAudioStream(calledUser.agoraId, false);
+
+            // }
             // }
             // if (stoppedTranslator) {
             //     await engineRef.current?.muteRemoteAudioStream(stoppedTranslator, true);
@@ -176,6 +197,13 @@ function CallScreenUI({ route, navigation }: Props) {
         // socket.current.on('translation_session_stopped', onTranslationSessionStopped);
 
         return () => {
+            // Emit leave_channel before disconnecting for proper tracking
+            // if (socket.current && channel && uid) {
+            //     socket.current.emit('leave_channel', {
+            //         channel: channel,
+            //         uid: uid,
+            //     });
+            // }
             socket.current?.off('connect', onConnect);
             socket.current?.off('translation_started', onTranslationStarted);
             socket.current?.off('translation_stopped', onTranslationStopped);
@@ -225,6 +253,79 @@ function CallScreenUI({ route, navigation }: Props) {
                     },
                     onJoinChannelSuccess: (_connection, myUid) => {
                         logger.info('Joined audio channel', { uid: myUid });
+                        callStartTime.current = Date.now();
+                        setIsCallActive(true); // Start the timer
+                        setCallDuration(0); // Reset duration
+
+                        // Notify server that Agora channel is actually joined
+                        // This ensures accurate timing - session starts only when channel is active
+                        const emitAgoraJoined = () => {
+                            if (socket.current && socket.current.connected) {
+                                console.log('Emitting agora_channel_joined', { channel, uid });
+                                socket.current.emit('agora_channel_joined', {
+                                    channel: channel,
+                                    uid: uid,
+                                    timestamp: Date.now()
+                                });
+                                return true;
+                            }
+                            return false;
+                        };
+
+                        // Try to emit immediately
+                        if (!emitAgoraJoined()) {
+                            console.warn('Socket not connected yet, waiting for connection...', {
+                                socketExists: !!socket.current,
+                                socketConnected: socket.current?.connected,
+                                channel,
+                                uid
+                            });
+
+                            // Wait for socket to connect (with timeout)
+                            let retryCount = 0;
+                            const maxRetries = 10; // 5 seconds max wait
+                            const retryInterval = setInterval(() => {
+                                retryCount++;
+                                if (emitAgoraJoined()) {
+                                    clearInterval(retryInterval);
+                                    console.log('Successfully emitted agora_channel_joined after retry', { retryCount });
+                                } else if (retryCount >= maxRetries) {
+                                    clearInterval(retryInterval);
+                                    console.error('Failed to emit agora_channel_joined after retries', {
+                                        retryCount,
+                                        channel,
+                                        uid
+                                    });
+                                    logger.error('Socket never connected - call tracking may be incomplete', {
+                                        channel,
+                                        uid
+                                    });
+                                }
+                            }, 500); // Retry every 500ms
+                        }
+                    },
+                    onLeaveChannel: (_connection, stats) => {
+                        console.log("Left audio channel");
+                        logger.info('Left audio channel', { stats });
+
+                        callStartTime.current = null;
+                        setIsCallActive(false); // Stop the timer
+                        setCallDuration(0);
+                        setIsLeaving(false);
+
+                        // Notify server that Agora channel is actually left
+                        // This ensures accurate timing - session ends when channel is actually left
+                        if (socket.current) {
+                            socket.current.emit('agora_channel_left', {
+                                channel: channel,
+                                uid: uid,
+                                timestamp: Date.now(),
+                            });
+                        }
+                        // Resolve the leave promise if it exists
+                        if (leaveChannelPromise.current.resolve) {
+                            leaveChannelPromise.current.resolve();
+                        }
                     },
                 });
 
@@ -253,6 +354,10 @@ function CallScreenUI({ route, navigation }: Props) {
                 engine.release();
                 engineRef.current = null;
             }
+            // Reset call timer
+            callStartTime.current = null;
+            setIsCallActive(false); // Stop the timer
+            setCallDuration(0);
         };
     }, [channel, channelTokenData, uid, expiresAt]);
 
@@ -354,24 +459,74 @@ function CallScreenUI({ route, navigation }: Props) {
     }
 
 
-    const onLeave = () => {
+    const formatCallTime = (seconds: number): string => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    const onLeave = async () => {
+        console.log("onLeave pressed");
+
+        if (isLeaving) return; // Prevent multiple calls
+
         logger.debug('Stopping translation');
         socket.current?.emit('stop_translation', {
             channel: channel,
             clientId: uid,
         });
 
+
+        // Emit leave_channel for tracking
+        socket.current?.emit('leave_channel', {
+            channel: channel,
+            uid: uid,
+        });
+
         // Reset local state immediately for responsive UI
         setIsTranslationEnabled(false);
+        callStartTime.current = null;
+        setIsCallActive(false); // Stop the timer
+        setCallDuration(0);
         const engine = engineRef.current;
         if (engine) {
-            engine.leaveChannel();
-            engine.release();
-            engineRef.current = null;
+            console.log('Calling engine.leaveChannel', { hasEngine: !!engineRef.current });
+            setIsLeaving(true); // Set leaving state
+            // Create a promise to wait for onLeaveChannel
+            const waitForLeave = new Promise<void>((resolve) => {
+                leaveChannelPromise.current.resolve = resolve;
+            });
+            // Set a timeout in case onLeaveChannel never fires
+            const timeoutPromise = new Promise<void>((resolve) => {
+                setTimeout(() => {
+                    console.warn('onLeaveChannel timeout, proceeding anyway');
+                    resolve();
+                }, 3000); // 3 second timeout
+            });
+
+            try {
+                engine.leaveChannel();
+
+                // Wait for either onLeaveChannel or timeout
+                await Promise.race([waitForLeave, timeoutPromise]);
+
+                console.log('Agora channel left confirmed');
+
+            } catch (error) {
+                console.error('Error leaving channel:', error);
+            } finally {
+                // Cleanup
+                engine.release();
+                engineRef.current = null;
+                leaveChannelPromise.current.resolve = undefined;
+
+                // Navigate back
+                navigation.goBack();
+            }
         }
-        // Navigate back to JoinScreen
-        // navigation.navigate('Join');
-        navigation.goBack();
+        else {
+            navigation.goBack();
+        }
     }
     return (
         <LinearGradient
@@ -401,7 +556,7 @@ function CallScreenUI({ route, navigation }: Props) {
 
                     <View style={style.callInfoContainerStyle}>
 
-                        <Text style={style.callTimeTextStyle}>1:58</Text>
+                        <Text style={style.callTimeTextStyle}>{formatCallTime(callDuration)}</Text>
 
                         <Text style={style.callNameTextStyle}>{calledUser?.lastName} {calledUser?.firstName}</Text>
 
