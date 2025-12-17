@@ -316,6 +316,8 @@ function CallScreenUI({ route, navigation }: Props) {
                         // Notify server that Agora channel is actually left
                         // This ensures accurate timing - session ends when channel is actually left
                         if (socket.current) {
+                            console.log("if (socket.current) onLeaveChannel",{channel:channel,uid:uid});
+                            
                             socket.current.emit('agora_channel_left', {
                                 channel: channel,
                                 uid: uid,
