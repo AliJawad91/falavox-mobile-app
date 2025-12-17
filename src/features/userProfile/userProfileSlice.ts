@@ -76,6 +76,7 @@ const userProfileSlice = createSlice({
         state.isLoading = false;
         const response = action.payload;
         // console.log(response,"response at case",response.data,".data");
+        console.log(response,"RESPONSEE");
         
         // if (response.success && response.data) {
           state.profile = response;

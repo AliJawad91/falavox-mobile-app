@@ -93,12 +93,12 @@ export interface UserProfile {
 }
 
 // Authentication response type
-export interface AuthResponse <T = any> {
-    success: boolean;
-    data?: T;
-    message: string;
-    error?: string;
-    tokens: Tokens
+export interface AuthResponse<T = any> {
+  success: boolean;
+  data?: T;
+  message: string;
+  error?: string;
+  tokens: Tokens
 }
 
 // { success: boolean; data: { tokens?: Tokens | undefined; }; error?: any; }
@@ -115,11 +115,15 @@ export interface AuthState {
 
 export interface User {
   id: string;
-  agoraId:number;
+  agoraId: number;
   userName: string; // Used for Voice IDs
   email: string;
   firstName?: string;
   lastName?: string;
+  wallet?: {
+    call: { availableMinutes: number; totalUsedMinutes: number };
+    translation: { availableMinutes: number; totalUsedMinutes: number };
+  };
   phoneNumber?: string;
   role: string;
   status: string;
@@ -130,12 +134,12 @@ export interface User {
 export interface UsersResponse {
   success: boolean;
   // data?: {
-    users: User[];
-    pagination?: {
-      currentPage: number;
-      totalPages: number;
-      totalUsers: number;
-      hasNext: boolean;
+  users: User[];
+  pagination?: {
+    currentPage: number;
+    totalPages: number;
+    totalUsers: number;
+    hasNext: boolean;
     // };
   };
   message: string;

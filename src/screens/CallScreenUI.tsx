@@ -43,6 +43,9 @@ function CallScreenUI({ route, navigation }: Props) {
     const [callDuration, setCallDuration] = useState(0); // Duration in seconds
     const [isCallActive, setIsCallActive] = useState(false); // Track if call is active for timer
     const [isLeaving, setIsLeaving] = useState(false);
+    const [joinStatusMessage, setJoinStatusMessage] = useState<string | null>(null);
+    const [isJoinInProgress, setIsJoinInProgress] = useState(true);
+    const joinCompletedAt = useRef<number | null>(null);
     const leaveChannelPromise = useRef<{ resolve?: () => void }>({});
     const callStartTime = useRef<number | null>(null);
 
@@ -254,9 +257,11 @@ function CallScreenUI({ route, navigation }: Props) {
                     onJoinChannelSuccess: (_connection, myUid) => {
                         logger.info('Joined audio channel', { uid: myUid });
                         callStartTime.current = Date.now();
+                        joinCompletedAt.current = Date.now();
+                        setIsJoinInProgress(false);
                         setIsCallActive(true); // Start the timer
                         setCallDuration(0); // Reset duration
-
+                        setShowLanguageModal(true);
                         // Notify server that Agora channel is actually joined
                         // This ensures accurate timing - session starts only when channel is active
                         const emitAgoraJoined = () => {
@@ -316,8 +321,8 @@ function CallScreenUI({ route, navigation }: Props) {
                         // Notify server that Agora channel is actually left
                         // This ensures accurate timing - session ends when channel is actually left
                         if (socket.current) {
-                            console.log("if (socket.current) onLeaveChannel",{channel:channel,uid:uid});
-                            
+                            console.log("if (socket.current) onLeaveChannel", { channel: channel, uid: uid });
+
                             socket.current.emit('agora_channel_left', {
                                 channel: channel,
                                 uid: uid,
@@ -471,7 +476,11 @@ function CallScreenUI({ route, navigation }: Props) {
         console.log("onLeave pressed");
 
         if (isLeaving) return; // Prevent multiple calls
-
+        if (joinCompletedAt.current && Date.now() - joinCompletedAt.current < 2000) {
+            setJoinStatusMessage('Call joining is in progress…');
+            setTimeout(() => setJoinStatusMessage(null), 1500);
+            return;
+        }
         logger.debug('Stopping translation');
         socket.current?.emit('stop_translation', {
             channel: channel,
@@ -559,7 +568,11 @@ function CallScreenUI({ route, navigation }: Props) {
                     <View style={style.callInfoContainerStyle}>
 
                         <Text style={style.callTimeTextStyle}>{formatCallTime(callDuration)}</Text>
-
+                        {joinStatusMessage && (
+                            <Text style={{ color: 'white', marginTop: 8, fontSize: 12 }}>
+                                {joinStatusMessage}
+                            </Text>
+                        )}
                         <Text style={style.callNameTextStyle}>{calledUser?.lastName} {calledUser?.firstName}</Text>
 
                         <Text style={style.callHashTagTextStyle}>@{calledUser?.userName}</Text>
@@ -650,7 +663,7 @@ function CallScreenUI({ route, navigation }: Props) {
                 <Modal
                     visible={showLanguageModal}
                     transparent={true}
-                    animationType="slide"
+                    animationType="fade"
                     onRequestClose={() => setShowLanguageModal(false)}
                 >
                     <View style={style.modalOverlay}>
@@ -659,7 +672,7 @@ function CallScreenUI({ route, navigation }: Props) {
 
                             {/* Speaking Language Selection */}
                             <View style={style.languageSection}>
-                                <Text style={style.languageLabel}>I will speak in:</Text>
+                                <Text style={style.languageLabel}>Speaker will speak in:</Text>
                                 <View style={style.languageButtons}>
                                     {[
                                         { code: 'en', name: 'English' },
