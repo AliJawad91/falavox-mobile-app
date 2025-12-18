@@ -30,6 +30,7 @@ import {
 import { RootStackParamList } from '../../App';
 import { APP_CONFIG, fetchWithTimeout, withBase } from '../config';
 import { logger } from '../utils/logger';
+import { getMe } from '../features/userProfile/userProfileSlice';
 
 interface FavoritesListProps {
   onShowUserList?: () => void;
@@ -59,7 +60,11 @@ const FavoritesList: React.FC<FavoritesListProps> = ({ onShowUserList }) => {
       dispatch(fetchFavorites({ page: 1, limit: 50 }));
     }
   }, [me?.id, dispatch]);
+  useEffect(() => {
+    console.log("get Me");
 
+    dispatch(getMe());
+  }, [])
   useFocusEffect(
     useCallback(() => {
       if (me?.id) {
@@ -172,7 +177,7 @@ const FavoritesList: React.FC<FavoritesListProps> = ({ onShowUserList }) => {
       const totalUsedMinutes = me.wallet?.call?.totalUsedMinutes ?? 0;
       console.log("Minutes availbility", { availableMinutes: availableMinutes, totalUsedMinutes: totalUsedMinutes });
 
-      if (availableMinutes < totalUsedMinutes) {
+      if (availableMinutes <= totalUsedMinutes || totalUsedMinutes > availableMinutes) {
         return Alert.alert(
           'We Appologie`s',
           ` ${user.userName}, You Dont have enough minutes available to make this call. Kindly purchase more minutes`,

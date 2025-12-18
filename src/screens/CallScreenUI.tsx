@@ -23,12 +23,15 @@ import createAgoraRtcEngine, { AudioProfileType, AudioScenarioType, ChannelProfi
 import { logger } from "../utils/logger";
 import { io } from "socket.io-client";
 import { ChannelTokenDataInterface, TranslationStartedPayloadAgain } from "../types";
+import { useAppDispatch } from "../hooks/redux";
+import { getMe } from "../features/userProfile/userProfileSlice";
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CallUI'>;
 
 function CallScreenUI({ route, navigation }: Props) {
     const { channel, calledUser, channelTokenData, uid, expiresAt } = route.params;
     const engineRef = useRef<IRtcEngine | null>(null);
+    const dispatch = useAppDispatch();
 
     const [tokenExpiry, setTokenExpiry] = useState<number | null>(expiresAt || null);
     const [remoteUsers, setRemoteUsers] = useState<number[]>([]);
@@ -176,6 +179,15 @@ function CallScreenUI({ route, navigation }: Props) {
         };
         socket.current.on('translation_stopped', onTranslationStopped);
 
+        const onForceCallEnd = (payload?: any) => {
+            console.log('force_call_end received', payload);
+            // Refresh user profile so wallet minutes are up to date after server-side timeout
+            dispatch(getMe());
+            onLeave();
+        };
+
+        socket.current.on('force_call_end', onForceCallEnd);
+
         // Broadcast variant sent to other users in the channel by the backend
         // const onTranslationSessionStopped = async (payload?: any) => {
         //     logger.info('Translation session stopped (broadcast), restoring original');
@@ -198,7 +210,6 @@ function CallScreenUI({ route, navigation }: Props) {
 
         // };
         // socket.current.on('translation_session_stopped', onTranslationSessionStopped);
-
         return () => {
             // Emit leave_channel before disconnecting for proper tracking
             // if (socket.current && channel && uid) {
@@ -210,6 +221,7 @@ function CallScreenUI({ route, navigation }: Props) {
             socket.current?.off('connect', onConnect);
             socket.current?.off('translation_started', onTranslationStarted);
             socket.current?.off('translation_stopped', onTranslationStopped);
+            socket.current?.off('force_call_end', onForceCallEnd);
             // socket.current?.off('translation_session_stopped', onTranslationSessionStopped);
             socket.current?.disconnect();
         };
@@ -489,10 +501,10 @@ function CallScreenUI({ route, navigation }: Props) {
 
 
         // Emit leave_channel for tracking
-        socket.current?.emit('leave_channel', {
-            channel: channel,
-            uid: uid,
-        });
+        // socket.current?.emit('leave_channel', {
+        //     channel: channel,
+        //     uid: uid,
+        // });
 
         // Reset local state immediately for responsive UI
         setIsTranslationEnabled(false);
