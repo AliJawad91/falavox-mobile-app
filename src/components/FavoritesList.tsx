@@ -30,6 +30,7 @@ import {
 import { RootStackParamList } from '../../App';
 import { APP_CONFIG, fetchWithTimeout, withBase } from '../config';
 import { logger } from '../utils/logger';
+import { getMe } from '../features/userProfile/userProfileSlice';
 
 interface FavoritesListProps {
   onShowUserList?: () => void;
@@ -59,7 +60,11 @@ const FavoritesList: React.FC<FavoritesListProps> = ({ onShowUserList }) => {
       dispatch(fetchFavorites({ page: 1, limit: 50 }));
     }
   }, [me?.id, dispatch]);
+  useEffect(() => {
+    console.log("get Me");
 
+    dispatch(getMe());
+  }, [])
   useFocusEffect(
     useCallback(() => {
       if (me?.id) {
@@ -163,22 +168,44 @@ const FavoritesList: React.FC<FavoritesListProps> = ({ onShowUserList }) => {
   }
   const makeCall = async (user: User) => {
     try {
-      if (!me?.userName) {
+      if (!me) {
         Alert.alert('Profile not loaded', 'Your profile information is not available yet. Please try again in a moment.');
         return;
       }
+      console.log(me, "meeee");
+      const availableMinutes = me.wallet?.call?.availableMinutes ?? 0;
+      const totalUsedMinutes = me.wallet?.call?.totalUsedMinutes ?? 0;
+      console.log("Minutes availbility", { availableMinutes: availableMinutes, totalUsedMinutes: totalUsedMinutes });
+
+      if (availableMinutes <= totalUsedMinutes || totalUsedMinutes > availableMinutes) {
+        return Alert.alert(
+          'We Appologie`s',
+          ` ${user.userName}, You Dont have enough minutes available to make this call. Kindly purchase more minutes`,
+          [
+            {
+              text: 'Cancel',
+              style: 'cancel',
+            },
+            {
+              text: 'Purchase Now',
+              // onPress: () => { makeCall(user) }
+            },
+          ]
+        );
+      }
+
       const channelName = generateChannelName(
         me.userName.toLowerCase(),
         user.userName.toLowerCase()
       );
       const tokenData = await generateToken(channelName)
       if (!tokenData) throw new Error("Token not generated");
-      console.log("CALLLL",tokenData);
-      
+      console.log("CALLLL", tokenData);
+
       navigation.navigate('CallUI', {
         channel: channelName,
         // language,
-        calledUser:user,
+        calledUser: user,
         channelTokenData: tokenData,
         uid: me?.agoraId || Number(tokenData.uid),
         // uid: Number(data.uid),
@@ -214,9 +241,17 @@ const FavoritesList: React.FC<FavoritesListProps> = ({ onShowUserList }) => {
   );
 
 
-  const renderItem = useCallback(({ item }: { item: User }) => (
-    <FavoriteItem user={item} onRemove={handleRemoveFavorite} onMakeCall={handleMakeCall} />
-  ), [handleRemoveFavorite]);
+  const renderItem = useCallback(
+    ({ item }: { item: User }) => (
+      <FavoriteItem
+        user={item}
+        onRemove={handleRemoveFavorite}
+        onMakeCall={handleMakeCall}
+        callJoinLoading={callJoinLoading}
+      />
+    ),
+    [handleRemoveFavorite, handleMakeCall, callJoinLoading]
+  );
 
   const keyExtractor = useCallback((item: User) => item.id, []);
 
@@ -248,10 +283,10 @@ const FavoritesList: React.FC<FavoritesListProps> = ({ onShowUserList }) => {
         keyExtractor={keyExtractor}
         renderItem={renderItem}
         //   estimatedItemSize={80}
-        onEndReached={loadMore}
+        onEndReached={callJoinLoading ? undefined : loadMore}
         onEndReachedThreshold={0.3}
         ListFooterComponent={
-          isLoading ? (
+          isLoading && !callJoinLoading ? (
             <ActivityIndicator style={styles.footerLoader} />
           ) : null
         }
@@ -267,6 +302,13 @@ const FavoritesList: React.FC<FavoritesListProps> = ({ onShowUserList }) => {
         }
         contentContainerStyle={favorites.length === 0 ? styles.emptyListContent : undefined}
       />
+      {/* Global loader overlay while joining a call */}
+      {callJoinLoading && (
+        <View style={styles.globalLoaderOverlay}>
+          <ActivityIndicator size="large" color="#ffffff" />
+          <Text style={styles.globalLoaderText}>Joining call…</Text>
+        </View>
+      )}
       {onShowUserList && (
         <TouchableOpacity
           style={styles.addButton}
@@ -285,11 +327,11 @@ interface FavoriteItemProps {
   user: User;
   onRemove: (user: User) => void;
   onMakeCall: (user: User) => void;
+  callJoinLoading: boolean;
 }
 
-const FavoriteItem: React.FC<FavoriteItemProps> = React.memo(({ user, onRemove, onMakeCall }) => (
-
-  <View style={styles.favoriteItem}>
+const FavoriteItem: React.FC<FavoriteItemProps> = React.memo(({ user, onRemove, onMakeCall, callJoinLoading }) => (
+  <View style={styles.favoriteItem} pointerEvents={callJoinLoading ? 'none' : 'auto'}>
     <View style={styles.userInfo}>
       {/* Avatar/Initials */}
       <View style={styles.avatar}>
@@ -309,9 +351,12 @@ const FavoriteItem: React.FC<FavoriteItemProps> = React.memo(({ user, onRemove, 
     </View>
     <TouchableOpacity
       style={styles.callButton}
-      onPress={() => onMakeCall(user)}
+      disabled={callJoinLoading}
+      onPress={() => !callJoinLoading && onMakeCall(user)}
     >
-      <Text style={styles.callButtonText}>CAll</Text>
+      <Text style={styles.callButtonText}>
+        {callJoinLoading ? 'Joining…' : 'Call'}
+      </Text>
     </TouchableOpacity>
     {/* Remove Button */}
     <TouchableOpacity
@@ -324,7 +369,6 @@ const FavoriteItem: React.FC<FavoriteItemProps> = React.memo(({ user, onRemove, 
 
 ));
 
-// Styles remain the same...
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -463,6 +507,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#ebffee',
     borderRadius: moderateScale(4),
   },
+  callButtonDisabled: {
+    opacity: 0.6,
+  },
   callButtonText: {
     color: '#2fd32f',
     fontSize: moderateScale(12),
@@ -505,6 +552,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: moderateVerticalScale(10)
+  },
+  globalLoaderOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    // backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  globalLoaderText: {
+    marginTop: moderateVerticalScale(10),
+    color: '#ffffff',
+    fontSize: moderateScale(14),
+    fontWeight: '500',
   },
 });
 
