@@ -16,10 +16,13 @@ import LogInScreen from './src/screens/LogInScreen';
 import UserLibraryScreen from './src/screens/UserLibraryScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import CallScreenUI from './src/screens/CallScreenUI';
+import PurchaseScreen from './src/screens/PurchaseScreen';
 import { useAppDispatch, useAppSelector } from './src/hooks/redux';
 import { getMe } from './src/features/userProfile/userProfileSlice';
 import AppInitializer from './src/components/wrappers/AppInitializer';
 import LoadingScreen from './src/components/common/LoadingScreen';
+import { StripeProvider } from '@stripe/stripe-react-native';
+import { APP_CONFIG } from './src/config';
 
 enableScreens();
 
@@ -44,6 +47,7 @@ export type RootStackParamList = {
     expiresAt?: number;
   };
   Settings: undefined;
+  Purchase: undefined;
 };
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -52,9 +56,10 @@ export default function App() {
   return (
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
-        <NavigationContainer>
-          <AppInitializer>
-            <RootNavigation />
+        <StripeProvider publishableKey={APP_CONFIG.STRIPE_PUBLISHABLE_KEY}>
+          <NavigationContainer>
+            <AppInitializer>
+              <RootNavigation />
             {/* <Stack.Navigator initialRouteName="Welcome">
               <Stack.Screen name="Welcome" component={WelcomeScreen} options={{ headerShown: false }} />
               <Stack.Screen name="CreateAccount" component={CreateAccountScreen} options={{ headerShown: false }} />
@@ -70,8 +75,9 @@ export default function App() {
               <Stack.Screen name="Call" component={CallScreen} />
               <Stack.Screen name="Settings" component={SettingsScreen} options={{ headerShown: false }} />
             </Stack.Navigator> */}
-          </AppInitializer>
-        </NavigationContainer>
+            </AppInitializer>
+          </NavigationContainer>
+        </StripeProvider>
       </PersistGate>
     </Provider>
   );
@@ -104,6 +110,7 @@ function RootNavigation() {
               //  headerLeft: () => null,
             }} />
           <Stack.Screen name="Settings" component={SettingsScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="Purchase" component={PurchaseScreen} options={{ headerShown: false }} />
           <Stack.Screen name="Join" component={JoinScreen} options={{ headerShown: false }} />
           <Stack.Screen name="CallUI" component={CallScreenUI} options={{ headerShown: false }} />
           <Stack.Screen name="Call" component={CallScreen} options={{ headerShown: false }} />

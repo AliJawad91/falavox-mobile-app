@@ -12,6 +12,8 @@ export const APP_CONFIG = {
   TOKEN_ENDPOINT: '/api/token',
   // Network defaults
   REQUEST_TIMEOUT_MS: 10_000,
+  // Stripe configuration - NOTE: This must be a PUBLISHABLE key (pk_test_...), NOT a secret key
+  STRIPE_PUBLISHABLE_KEY: env.STRIPE_PUBLISHABLE_KEY || 'pk_test_51RRFI1PoC0ROey43AcXKnDTW5WM4bbkxjxBL2wAuWKHmF6gdAVB3M99Y7eia3f1u16ktOKhGTpKmtQ9rvgzvDcm100NuP5o3mq', // Replace with your Stripe PUBLISHABLE key (starts with pk_test_)
 } as const;
 
 export function withBase(path: string): string {

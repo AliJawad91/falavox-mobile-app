@@ -188,7 +188,7 @@ const FavoritesList: React.FC<FavoritesListProps> = ({ onShowUserList }) => {
             },
             {
               text: 'Purchase Now',
-              // onPress: () => { makeCall(user) }
+              onPress: () => navigation.navigate('Purchase')
             },
           ]
         );
