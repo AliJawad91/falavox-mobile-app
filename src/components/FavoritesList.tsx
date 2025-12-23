@@ -152,14 +152,7 @@ const FavoritesList: React.FC<FavoritesListProps> = ({ onShowUserList }) => {
       if (!data.token) throw new Error("Unsuccessfull Token Generation .");
       //get user id
       return data;
-      // navigation.navigate('Call', {
-      //   channel: channelName,
-      //   // language,
-      //   channelTokenData: data,
-      //   uid: me?.agoraId || Number(data.uid),
-      //   // uid: Number(data.uid),
-      //   expiresAt: data.expiresAt,
-      // });
+
     } catch (err: any) {
       setCallJoinLoading(false);
       logger.error('Join error', err);
